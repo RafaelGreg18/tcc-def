@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "perf_eval_cs_fl"
+version = "1.0.0"
+description = ""
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.15.2",
+    "flwr-datasets[vision]>=0.5.0",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "filipe"
+
+[tool.flwr.app.components]
+serverapp = "server_app:app"
+clientapp = "client_app:app"
+
+[tool.flwr.app.config]
+# global
+seed = 1
+use-profile = true
+root-data-dir = "./dataset/"
+root-model-dir = "./model/"
+root-profiles-dir = "./profiles/"
+root-outputs-dir = "./outputs/"
+
+# Profiles
+# "./utils/profiles/Mobilenet_v2.json"
+# "./utils/profiles/Shufflenet_v2_x0_5.json"
+# "./utils/profiles/Resnext50_32x4d.json"
+# "./utils/profiles/Lstm.json"
+# "./utils/profiles/CRNNResNetAttn.json"
+devices-profile-path = "./utils/profiles/Mobilenet_v2.json"
+net-speed-path = "./utils/profiles/bandwidth.json"
+carbon-data-path = "./utils/profiles/carbon.json"
+
+# model
+
+# "simplecnn"
+# "Mobilenet_v2"
+# "Shufflenet_v2_x0_5"
+# "Resnext50_32x4d"
+# "Lstm"
+# "CRNNResNetAttn"
+model-name = "simplecnn"
+# shape
+input-shape = "(3, 32, 32)"
+#input-shape = "(3,224,224)"
+# classes
+num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
+# model independent
+epochs = 1 #real deploy: 5
+learning-rate = 1e-3 #CRNNResNetAttn: 3e-4 Others: 1e-3
+
+# device profile
+use-battery = false
+prefer-time = "EQUAL" # SLOW, EQUAL, FAST
+prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
+prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
+battery-profile-low = 100
+battery-profile-medium = 200
+battery-profile-high = 300
+carbon-region = "United States"
+net-scenario = "US"
+
+# dataset
+# "flwrlabs/shakespeare"
+# "uoft-cs/cifar10"
+# "speech_commands"
+hugginface-id = "uoft-cs/cifar10"
+dir-alpha = 0.3 #0.1, 0.3, 1.0
+batch-size = 16 #speech_commands: 8 others:16
+testset-name = "test_global.pt"
+
+# client
+battery-threshold = 0.05
+
+# strategy
+selection-name = "random"
+aggregation-name = "fedavg"
+num-clients = 100 #shakespeare:903 cifar10:100 speech_commands:2112
+num-rounds = 100 #100
+fraction-fit = 0.1 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
+fraction-evaluate = 0.0
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0
+options.backend.init_args.num_cpus = 1
+options.backend.init_args.num_gpus = 1
+
+[tool.flwr.federations.gpu-sim-dl]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 25
+options.backend.init_args.num_gpus = 3

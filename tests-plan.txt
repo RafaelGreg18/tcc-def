@@ -1,0 +1,28 @@
+Valores padrão:
+    - Num clients: 100
+    - Dir(alpha): 0.5
+    - Fit Fraction: 0.1
+    - Épocas locais: 5
+    - Rodadas: 30
+    - Seleção: aleatória
+    - Agregação: avg
+
+Teste do impacto da quantidade de dados por cliente:
+    - Varia num clientes: 10, 50, 100, 200
+    - Métricas:
+        - Sobre o dataset de cada cliente:
+            - Vendi Score: diversidade local
+            - KL-Divergence: diversidade global
+        - Rodadas para atingir 50%, 75% e 100% da acurácia em 30 rodadas de 10
+        - Acurácia em teste
+        - Divergência média entre modelos locais
+        - Divergência entre modelos locais e global atualizado
+        - Variância da divergência
+        - Equidade entre datasets de treinamento dos Clientes
+        - Energia consumida
+        - Rede consumida
+        - taxa de Convergência com Base na Perda:
+            Taxa de Convergência = (Perda(t)−Perda(t−1))/Perda(t−1)
+
+Teste da quantidade de clientes selecionados por rodada:
+    - Varia Fit Fraction: 2, 0.05, 0.1, 0.25, 0.5, 1.0
