@@ -11,14 +11,6 @@ import numpy as np
 import torch
 
 
-def check_hugginface_dataset_id(dataset_id: str):
-    # url = f"https://huggingface.co/api/datasets/{dataset_id}"
-    # response = requests.get(url)
-    #
-    # return response.status_code
-    return 200
-
-
 class ConfigRepository:
     def __init__(self, path):
         with open(path, "rb") as f:
@@ -47,21 +39,21 @@ class ConfigRepository:
         cfg.setdefault("root-model-dir", "./model/")
         cfg.setdefault("root-profile-dir", "./profiles/")
         cfg.setdefault("root-outputs-dir", "./outputs/")
-        cfg.setdefault("devices-profile-path", "./utils/profiles/mobilenetv2.json")
+        cfg.setdefault("devices-profile-path", "./utils/profiles/Mobilenet_v2.json")
         cfg.setdefault("net-speed-path", "./utils/profiles/bandwidth.json")
         cfg.setdefault("carbon-data-path", "./utils/profiles/carbon.json")
 
         # dataset
         cfg.setdefault("hugginface-id", "uoft-cs/cifar10")
-        cfg.setdefault("dir-alpha", 0.5)
-        cfg.setdefault("batch-size", 16)
+        cfg.setdefault("dir-alpha", 0.3)
+        cfg.setdefault("batch-size", 8)
         cfg.setdefault("testset-name", "test_global.pt")
 
         # model
         cfg.setdefault("model-name", "simplecnn")
         cfg.setdefault("input-shape", "(3, 32, 32)")
         cfg.setdefault("num-classes", 10)
-        cfg.setdefault("epochs", 5)
+        cfg.setdefault("epochs", 1)
         cfg.setdefault("learning-rate", 1e-3)
 
         # device profile
@@ -81,9 +73,6 @@ class ConfigRepository:
         cfg.setdefault("num-rounds", 2)
         cfg.setdefault("fraction-fit", 0.1)
         cfg.setdefault("fraction-evaluate", 0.0)
-        # stat-sys
-        cfg.setdefault("is-stat-sys", False)
-        cfg.setdefault("stat-weight", 0.5)
         # client
         cfg.setdefault("battery-threshold", 0.1)
 
@@ -118,10 +107,6 @@ class ConfigRepository:
         cfg["fraction-fit"] = float(cfg["fraction-fit"])
         cfg["fraction-evaluate"] = float(cfg["fraction-evaluate"])
 
-        # stat-sys
-        cfg["is-stat-sys"] = bool(cfg["is-stat-sys"])
-        cfg["stat-weight"] = float(cfg["stat-weight"])
-
         # client
         cfg["battery-threshold"] = float(cfg["battery-threshold"])
 
@@ -130,19 +115,15 @@ class ConfigRepository:
     @classmethod
     def validate_app_config(cls, cfg):
         errors = []
-        if (status_code := check_hugginface_dataset_id(cfg["hugginface-id"])) != 200:
-            if status_code == 404:
-                errors.append("Dataset does NOT exist.")
-            else:
-                errors.append(f"Huggingface dataset check unexpected response: {status_code}")
+
         if cfg["num-clients"] < 2:
             errors.append("num-clients >= 2")
         if cfg["dir-alpha"] <= 0:
             errors.append("dir-alpha > 0")
         if cfg["num-classes"] < 2:
             errors.append("num-classes > 1")
-        if cfg["prefer-time"] not in ["QUICK", "SLOW", "UNIFORM"]:
-            errors.append("Device inference time distribution config (prefer-time) must be: QUICK, SLOW or UNIFORM")
+        if cfg["prefer-time"] not in ["SLOW", "EQUAL", "FAST"]:
+            errors.append("Device inference time distribution config (prefer-time) must be: SLOW, EQUAL or FAST")
         if cfg["prefer-battery"] not in ["LOW", "MEDIUM", "HIGH", "EQUAL"]:
             errors.append(
                 "Device battery distribution config (prefer-battery) must be: LOW, MEDIUM, HIGH or EQUAL")
@@ -153,8 +134,6 @@ class ConfigRepository:
             errors.append("Some battery profile is <= 0")
         if type(cfg["use-profile"]) != bool:
             errors.append(f"You must use bool to control the profile usage in simulation: true or false")
-        if cfg["stat-weight"] <= 0.0 or cfg["stat-weight"] >= 1.0:
-            errors.append("Statistical weight (stat-weight) variable must be between 0.0 and 1.0")
         if errors:
             raise ValueError("Config errors:\n" + "\n".join(errors))
 

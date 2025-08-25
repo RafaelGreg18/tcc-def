@@ -34,14 +34,14 @@ root-profiles-dir = "./profiles/"
 root-outputs-dir = "./outputs/"
 
 # Profiles
-# "./utils/profiles/Mobilenet_v2.json"
-# "./utils/profiles/Shufflenet_v2_x0_5.json"
-# "./utils/profiles/Resnext50_32x4d.json"
-# "./utils/profiles/Lstm.json"
-# "./utils/profiles/CRNNResNetAttn.json"
-devices-profile-path = "./utils/profiles/Mobilenet_v2.json"
-net-speed-path = "./utils/profiles/bandwidth.json"
-carbon-data-path = "./utils/profiles/carbon.json"
+# "./utils/profile/Mobilenet_v2.json"
+# "./utils/profile/Shufflenet_v2_x0_5.json"
+# "./utils/profile/Resnext50_32x4d.json"
+# "./utils/profile/Lstm.json"
+# "./utils/profile/CRNNResNetAttn.json"
+devices-profile-path = "./utils/profile/Mobilenet_v2.json"
+net-speed-path = "./utils/profile/bandwidth.json"
+carbon-data-path = "./utils/profile/carbon.json"
 
 # model
 

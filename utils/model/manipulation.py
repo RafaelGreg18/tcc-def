@@ -44,7 +44,6 @@ def train(model, dataloader, epochs, criterion, optimizer, device):
             else:
                 loss = criterion(outputs, y)
 
-            # _, predicted = torch.max(outputs.data, 1)
             predicted = outputs.argmax(1)
             total_pred += y.size(0)
             correct_pred += (predicted == y).sum().item()
@@ -78,7 +77,7 @@ def test(model, dataloader, device):
             losses = loss_criterion(outputs, y)
             squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
             total_loss += losses.mean().item() * y.size(0)
-            _, predicted = outputs.argmax(1)
+            predicted = outputs.argmax(1)
             total_pred += y.size(0)
             correct_pred += (predicted == y).sum().item()
 

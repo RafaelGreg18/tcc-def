@@ -1,7 +1,7 @@
 import argparse
 import json
 
-from utils.profiles.client_profiles import create_profiles
+from utils.profile.client_profiles import create_profiles
 from utils.simulation.config import ConfigRepository, set_seed
 
 
