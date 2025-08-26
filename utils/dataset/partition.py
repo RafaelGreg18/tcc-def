@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 import torch
-from datasets import DownloadConfig, concatenate_datasets
+from datasets import DownloadConfig, concatenate_datasets, Dataset
 from datasets import Dataset as ArrowDataset
 
 from flwr_datasets import FederatedDataset
@@ -213,6 +213,7 @@ class ShakespeareDataset(TorchDataset):
 # ----------------------------------------------------------------------
 class DatasetFactory:
     _fds_cache: Dict[str, FederatedDataset] = {}
+    _fds_partition_cache: Dict[str, Dataset] = {}
     _pred_train_ids: List[int] = []  # num_partitions = 1129
     _pred_test_ids: List[int] = []
 
@@ -315,15 +316,21 @@ class DatasetFactory:
         Returns train DataLoader for the requested partition.
         If as_tuple=True, returns (trainloader, testloader) splitting the partition.
         """
-        fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
-        partition = fds.load_partition(partition_id)
-        partition_torch = partition.with_transform(DatasetConfig.get_transform(dataset_id, True))
+        if partition_id not in cls._fds_partition_cache:
+            fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
+            partition = fds.load_partition(partition_id)
+            partition_torch = partition.with_transform(DatasetConfig.get_transform(dataset_id, True))
 
-        g = torch.Generator()
-        g.manual_seed(seed)
+            g = torch.Generator()
+            g.manual_seed(seed)
 
-        trainloader = DataLoader(partition_torch, batch_size=batch_size, shuffle=True, num_workers=0,
-                                 worker_init_fn=seed_worker, generator=g)
+            trainloader = DataLoader(partition_torch, batch_size=batch_size, shuffle=True, num_workers=0,
+                                     worker_init_fn=seed_worker, generator=g)
+
+            cls._fds_partition_cache[partition_id] = trainloader
+        else:
+            trainloader = cls._fds_partition_cache[partition_id]
+
         return trainloader
 
     # ----------------- Shakespeare -----------------
@@ -339,88 +346,99 @@ class DatasetFactory:
         Returns train DataLoader for the requested partition.
         If as_tuple=True, returns (trainloader, testloader) splitting the partition.
         """
-        fds = cls._get_federated_dataset(dataset_id, seed=seed)
+        if partition_id not in cls._fds_partition_cache:
+            fds = cls._get_federated_dataset(dataset_id, seed=seed)
 
-        real_id = cls._pred_train_ids[partition_id]
-        partition = fds.load_partition(real_id)
+            real_id = cls._pred_train_ids[partition_id]
+            partition = fds.load_partition(real_id)
 
-        g = torch.Generator()
-        g.manual_seed(seed)
+            g = torch.Generator()
+            g.manual_seed(seed)
 
-        dataset = ShakespeareDataset(partition)
-        trainloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0,
-                                 worker_init_fn=seed_worker, generator=g)
+            dataset = ShakespeareDataset(partition)
+            trainloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0,
+                                     worker_init_fn=seed_worker, generator=g)
+
+            cls._fds_partition_cache[partition_id] = trainloader
+        else:
+            trainloader = cls._fds_partition_cache[partition_id]
 
         return trainloader
 
     # ----------------- Speech Commands -----------------
     @classmethod
     def _get_audio_class_partition(cls, dataset_id, partition_id, batch_size, seed):
-        remove_cols = "file,audio,label,is_unknown,speaker_id,utterance_id".split(",")
+        if partition_id not in cls._fds_partition_cache:
+            remove_cols = "file,audio,label,is_unknown,speaker_id,utterance_id".split(",")
 
-        fds = cls._get_federated_dataset(dataset_id, seed=seed)
-        partition = fds.load_partition(partition_id)
+            fds = cls._get_federated_dataset(dataset_id, seed=seed)
+            partition = fds.load_partition(partition_id)
 
-        # Encode (single-proc, estável e cacheável)
-        partition = partition.map(
-            encode_batch,
-            num_proc=1,
-            remove_columns=remove_cols,
-            load_from_cache_file=True,
-            desc=f"Encode p{partition_id}",
-        )
-
-        # Silences proporcionais ao tamanho da partição
-        partitioner = fds.partitioners["train"]
-        base_train = partitioner.dataset
-        ratio_silences_for_client = 0.1 * (len(partition) / max(1, len(base_train)))
-        silence_dataset = prepare_silences_dataset(base_train, ratio_silences_for_client)
-
-        if len(silence_dataset) > 0:
-            silence_enc = silence_dataset.map(
+            # Encode (single-proc, estável e cacheável)
+            partition = partition.map(
                 encode_batch,
                 num_proc=1,
                 remove_columns=remove_cols,
                 load_from_cache_file=True,
-                desc=f"Encode silence p{partition_id}",
+                desc=f"Encode p{partition_id}",
             )
-            partition = concatenate_datasets([partition, silence_enc])
 
-        trainset = partition.with_format("python")
+            # Silences proporcionais ao tamanho da partição
+            partitioner = fds.partitioners["train"]
+            base_train = partitioner.dataset
+            ratio_silences_for_client = 0.1 * (len(partition) / max(1, len(base_train)))
+            silence_dataset = prepare_silences_dataset(base_train, ratio_silences_for_client)
 
-        # Filtro defensivo [80,T>0]
-        def _ok(ex):
-            x = ex.get("data", None)
-            y = ex.get("targets", None)
-            if x is None or y is None:
-                return False
-            arr = np.asarray(x)
-            if arr.ndim == 3 and arr.shape[0] == 1:
-                arr = arr.squeeze(0)
-            if arr.ndim == 2 and arr.shape[1] == N_MELS:
-                arr = arr.transpose(1, 0)
-            return (arr.ndim == 2 and arr.shape[0] == N_MELS and arr.shape[1] > 0)
+            if len(silence_dataset) > 0:
+                silence_enc = silence_dataset.map(
+                    encode_batch,
+                    num_proc=1,
+                    remove_columns=remove_cols,
+                    load_from_cache_file=True,
+                    desc=f"Encode silence p{partition_id}",
+                )
+                partition = concatenate_datasets([partition, silence_enc])
 
-        trainset = trainset.filter(_ok, num_proc=1)
+            trainset = partition.with_format("python")
 
-        # Sampler balanceado
-        sampler = None
-        if len(trainset) > batch_size:
-            y = np.asarray(trainset["targets"], dtype=np.int64)
-            hist = np.bincount(y, minlength=12)
-            w_per_class = 1.0 / np.maximum(hist, 1)
-            w_ss = w_per_class[y]
-            sampler = WeightedRandomSampler(w_ss.tolist(), len(w_ss), replacement=True)
+            # Filtro defensivo [80,T>0]
+            def _ok(ex):
+                x = ex.get("data", None)
+                y = ex.get("targets", None)
+                if x is None or y is None:
+                    return False
+                arr = np.asarray(x)
+                if arr.ndim == 3 and arr.shape[0] == 1:
+                    arr = arr.squeeze(0)
+                if arr.ndim == 2 and arr.shape[1] == N_MELS:
+                    arr = arr.transpose(1, 0)
+                return (arr.ndim == 2 and arr.shape[0] == N_MELS and arr.shape[1] > 0)
 
-        trainloader = DataLoader(
-            trainset,
-            batch_size=batch_size,
-            shuffle=False,
-            sampler=sampler,
-            num_workers=0,
-            drop_last=False,
-            collate_fn=crnn_collate,
-        )
+            trainset = trainset.filter(_ok, num_proc=1)
+
+            # Sampler balanceado
+            sampler = None
+            if len(trainset) > batch_size:
+                y = np.asarray(trainset["targets"], dtype=np.int64)
+                hist = np.bincount(y, minlength=12)
+                w_per_class = 1.0 / np.maximum(hist, 1)
+                w_ss = w_per_class[y]
+                sampler = WeightedRandomSampler(w_ss.tolist(), len(w_ss), replacement=True)
+
+            trainloader = DataLoader(
+                trainset,
+                batch_size=batch_size,
+                shuffle=False,
+                sampler=sampler,
+                num_workers=0,
+                drop_last=False,
+                collate_fn=crnn_collate,
+            )
+
+            cls._fds_partition_cache[partition_id] = trainloader
+        else:
+            trainloader = cls._fds_partition_cache[partition_id]
+
         return trainloader
 
     # ----------------- API pública -----------------
