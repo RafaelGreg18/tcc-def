@@ -1,10 +1,9 @@
 import sys
 sys.path.append('../')
-
 import torch
 import numpy as np
 
-from utils.dataset.fileloader import DataLoaderHelper
+from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, train, test
 from utils.simulation.config import ConfigRepository, set_seed
 
@@ -37,21 +36,24 @@ def main():
     g = torch.Generator()
     g.manual_seed(seed)
 
-    selected_by_round = np.random.randint(0, 100, size=(20, 10))
+    dataset_id = cfg["hugginface-id"]
+    num_partitions = cfg["num-clients"]
+    alpha = cfg["dir-alpha"]
+    batch_size = cfg["batch-size"]
+
+
+    selected_by_round = np.random.randint(0, 903, size=(20, 42))
     for row in range(len(selected_by_round)):
         selected_clients = selected_by_round[row]
         for id in selected_clients:
-            user_dataset_path = "../dataset/" + f"train_partition_{id.item()}.pt"
-            dataset_id = cfg["hugginface-id"]
-            dataloader = DataLoaderHelper.load_dataloader_samples(user_dataset_path, g, dataset_id, shuffle=True)
-            train(model, dataloader, epochs, criterion, optimizer, device)
+            dataloader = DatasetFactory.get_partition(dataset_id, id, num_partitions, alpha, batch_size, seed)
+            train(model, dataloader, epochs, criterion, optimizer, device, dataset_id)
 
-    test_path = "../dataset/" + cfg["testset-name"]
-    dataset_id = cfg["hugginface-id"]
-    testloader = DataLoaderHelper.load_dataloader_samples(test_path, g, dataset_id, shuffle=False)
-    avg_loss, avg_acc, stat_util = test(model, testloader, device)
+    testloader = DatasetFactory.get_test_dataset(dataset_id, batch_size, num_partitions, alpha, seed)
+    avg_loss, avg_acc, stat_util = test(model, testloader, device, dataset_id)
 
     print(avg_loss, avg_acc, stat_util)
+
 
 if __name__ == '__main__':
     main()

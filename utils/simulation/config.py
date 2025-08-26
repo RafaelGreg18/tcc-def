@@ -35,7 +35,6 @@ class ConfigRepository:
         # global
         cfg.setdefault("seed", 1)
         cfg.setdefault("use-profile", True)
-        cfg.setdefault("root-data-dir", "./dataset/")
         cfg.setdefault("root-model-dir", "./model/")
         cfg.setdefault("root-profile-dir", "./profiles/")
         cfg.setdefault("root-outputs-dir", "./outputs/")
@@ -47,7 +46,6 @@ class ConfigRepository:
         cfg.setdefault("hugginface-id", "uoft-cs/cifar10")
         cfg.setdefault("dir-alpha", 0.3)
         cfg.setdefault("batch-size", 8)
-        cfg.setdefault("testset-name", "test_global.pt")
 
         # model
         cfg.setdefault("model-name", "simplecnn")
@@ -80,7 +78,6 @@ class ConfigRepository:
         # global
         cfg["seed"] = int(cfg["seed"])
         cfg["use-profile"] = bool(cfg["use-profile"])
-        os.makedirs(cfg["root-data-dir"], exist_ok=True)
         os.makedirs(cfg["root-model-dir"], exist_ok=True)
         os.makedirs(cfg["root-profile-dir"], exist_ok=True)
         os.makedirs(cfg["root-outputs-dir"], exist_ok=True)

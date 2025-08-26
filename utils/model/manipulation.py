@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from utils.dataset.config import DatasetConfig
 from utils.model.factory import ModelFactory
 
 
@@ -19,17 +20,20 @@ class ModelPersistence:
         return model
 
 
-def train(model, dataloader, epochs, criterion, optimizer, device):
+def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
     model.to(device)
     model.train()
     squared_sum = num_samples = 0
+    key = DatasetConfig.BATCH_KEY[dataset_id]
+    value = DatasetConfig.BATCH_VALUE[dataset_id]
 
     for epoch in range(1, epochs + 1):
         total_loss = 0
         correct_pred = total_pred = 0
 
-        for x, y in dataloader:
-            x, y = x.to(device), y.to(device)
+        for batch in dataloader:
+            x, y = batch[key].to(device), batch[value].to(device)
+
             optimizer.zero_grad()
             outputs = model(x)
 
@@ -63,16 +67,19 @@ def train(model, dataloader, epochs, criterion, optimizer, device):
     return avg_loss, avg_acc, stat_util
 
 
-def test(model, dataloader, device):
+def test(model, dataloader, device, dataset_id):
     model.to(device)
     model.eval()
     loss_criterion = torch.nn.CrossEntropyLoss(reduction='none')
     total_loss = 0
     squared_sum = 0
     correct_pred = total_pred = 0
+    key = DatasetConfig.BATCH_KEY[dataset_id]
+    value = DatasetConfig.BATCH_VALUE[dataset_id]
+
     with torch.no_grad():
-        for x, y in dataloader:
-            x, y = x.to(device), y.to(device)
+        for batch in dataloader:
+            x, y = batch[key].to(device), batch[value].to(device)
             outputs = model(x)
             losses = loss_criterion(outputs, y)
             squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
