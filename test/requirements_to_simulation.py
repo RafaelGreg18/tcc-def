@@ -50,6 +50,7 @@ def main():
             dataloader = DatasetFactory.get_partition(dataset_id, id, num_partitions, alpha, batch_size, seed)
             train(model, dataloader, epochs, criterion, optimizer, device, dataset_id)
             print(f"Rodada {row + 1} Cliente {cliente}")
+            cliente += 1
 
     testloader = DatasetFactory.get_test_dataset(dataset_id, batch_size, num_partitions, alpha, seed)
     avg_loss, avg_acc, stat_util = test(model, testloader, device, dataset_id)
