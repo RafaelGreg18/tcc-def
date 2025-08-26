@@ -45,10 +45,11 @@ def main():
     selected_by_round = np.random.randint(0, 903, size=(20, 42))
     for row in range(len(selected_by_round)):
         selected_clients = selected_by_round[row]
+        cliente = 1
         for id in selected_clients:
             dataloader = DatasetFactory.get_partition(dataset_id, id, num_partitions, alpha, batch_size, seed)
             train(model, dataloader, epochs, criterion, optimizer, device, dataset_id)
-            print(f"Rodada {row + 1} Cliente {id}")
+            print(f"Rodada {row + 1} Cliente {cliente}")
 
     testloader = DatasetFactory.get_test_dataset(dataset_id, batch_size, num_partitions, alpha, seed)
     avg_loss, avg_acc, stat_util = test(model, testloader, device, dataset_id)
