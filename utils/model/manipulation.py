@@ -82,7 +82,12 @@ def test(model, dataloader, device, dataset_id):
 
     with torch.no_grad():
         for batch in dataloader:
-            x, y = batch[key].to(device), batch[value].to(device)
+
+            if isinstance(batch, dict):
+                x, y = batch[key].to(device), batch[value].to(device)
+            elif isinstance(batch, list):
+                x, y = batch[0].to(device), batch[1].to(device)
+
             outputs = model(x)
             losses = loss_criterion(outputs, y)
             squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
