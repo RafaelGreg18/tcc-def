@@ -32,7 +32,10 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
         correct_pred = total_pred = 0
 
         for batch in dataloader:
-            x, y = batch[key].to(device), batch[value].to(device)
+            if isinstance(batch, dict):
+                x, y = batch[key].to(device), batch[value].to(device)
+            elif isinstance(batch, list):
+                x, y = batch[0].to(device), batch[1].to(device)
 
             optimizer.zero_grad()
             outputs = model(x)
