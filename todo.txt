@@ -1,2 +1,5 @@
 1 - Criação do speech_commands: gerar todas as partições e realizar para cada uma o encode e filter, deixar salvo em
-variável e acessar quando cliente selecionado.
+variável e acessar quando cliente selecionado. (ok)
+2 - Programar servidor|client base + fedavg. (ok)
+3 - Garantir a execução de n_rounds + 1, onde round 1 é apenas para obter mapeamento de cids. Ou usar memória compartilhada
+do flower para mapeamento e usar a quantidade de rodadas normal.

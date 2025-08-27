@@ -65,12 +65,13 @@ class ConfigRepository:
         cfg.setdefault("carbon-region", "United States")
         cfg.setdefault("net-scenario", "US")
         # strategy
+        cfg.setdefault("participants-name", "constant")
         cfg.setdefault("selection-name", "random")
         cfg.setdefault("aggregation-name", "fedavg")
         cfg.setdefault("num-clients", 100)
         cfg.setdefault("num-rounds", 2)
-        cfg.setdefault("fraction-fit", 0.1)
-        cfg.setdefault("fraction-evaluate", 0.0)
+        cfg.setdefault("num-participants", 0.1)
+        cfg.setdefault("num-evaluators", 0.0)
         # client
         cfg.setdefault("battery-threshold", 0.1)
 
@@ -101,8 +102,8 @@ class ConfigRepository:
         # strategy
         cfg["num-clients"] = int(cfg["num-clients"])
         cfg["num-rounds"] = int(cfg["num-rounds"])
-        cfg["fraction-fit"] = float(cfg["fraction-fit"])
-        cfg["fraction-evaluate"] = float(cfg["fraction-evaluate"])
+        cfg["num-participants"] = int(cfg["num-participants"])
+        cfg["num-evaluators"] = int(cfg["num-evaluators"])
 
         # client
         cfg["battery-threshold"] = float(cfg["battery-threshold"])
