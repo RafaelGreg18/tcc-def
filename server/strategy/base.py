@@ -76,25 +76,22 @@ class BaseStrategy(Strategy):
     ) -> list[tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
         if server_round == 1:
-            config = {}
-            if self.on_fit_config_fn is not None:
-                # Custom fit config function provided
-                config = self.on_fit_config_fn(server_round)
-            fit_ins = FitIns(parameters, config)
-
-            all_clients = client_manager.all()
-
-            for flwr_cid in all_clients.keys():
-                if flwr_cid not in self.cid_map:
-                    self.cid_map[flwr_cid] = -1
-
-            sample_size = min_num_clients = len(all_clients)
-
-            clients = client_manager.sample(
-                num_clients=sample_size, min_num_clients=min_num_clients
-            )
-
-            return [(client, fit_ins) for client in clients]
+            # config = {}
+            # if self.on_fit_config_fn is not None:
+            #     # Custom fit config function provided
+            #     config = self.on_fit_config_fn(server_round)
+            # fit_ins = FitIns(parameters, config)
+            #
+            # all_clients = client_manager.all()
+            #
+            # sample_size = min_num_clients = len(all_clients)
+            #
+            # clients = client_manager.sample(
+            #     num_clients=sample_size, min_num_clients=min_num_clients
+            # )
+            #
+            # return [(client, fit_ins) for client in clients]
+            return []
         else:
             return self._do_configure_fit(server_round, parameters, client_manager)
 

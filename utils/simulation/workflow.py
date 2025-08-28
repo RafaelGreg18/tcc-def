@@ -192,7 +192,7 @@ def get_profiles(context):
 
 
 def get_server_app_components(context, strategy):
-    num_rounds = context.run_config["num-rounds"]
+    num_rounds = context.run_config["num-rounds"] + 1
 
     config = ServerConfig(num_rounds=num_rounds)
     server = Server(strategy=strategy, client_manager=SimpleClientManager())
