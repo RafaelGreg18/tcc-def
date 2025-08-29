@@ -1,28 +1,36 @@
-Valores padrão:
-    - Num clients: 100
-    - Dir(alpha): 0.5
-    - Fit Fraction: 0.1
-    - Épocas locais: 5
-    - Rodadas: 30
-    - Seleção: aleatória
-    - Agregação: avg
+Motivação:
+A quantidade de clientes selecionados impacta o desempenho e o custo do aprendizado?
+- Sem bateria
+- Exp:
+    Variar fração de participação C entre 10% e 100%.
+    Medir o desempenho em 100 rodadas.
+    Encontrar acurácia máxima.
+    Medir quantas rodadas cada C levou para alcançar 75% e 90% da acurácia máxima.
+    Medir quanta energia e bytes foram transmitidos até alcançar 75% e 90% da acurácia máxima para cada C.
+    * Salvar: Acuŕacia em teste, Energia consumida, Bytes transmitidos, Pegada de carbono.
+    * 3 seeds
+    * Uma grade variando niid de (0.1, 0.3, 1.0)
 
-Teste do impacto da quantidade de dados por cliente:
-    - Varia num clientes: 10, 50, 100, 200
-    - Métricas:
-        - Sobre o dataset de cada cliente:
-            - Vendi Score: diversidade local
-            - KL-Divergence: diversidade global
-        - Rodadas para atingir 50%, 75% e 100% da acurácia em 30 rodadas de 10
-        - Acurácia em teste
-        - Divergência média entre modelos locais
-        - Divergência entre modelos locais e global atualizado
-        - Variância da divergência
-        - Equidade entre datasets de treinamento dos Clientes
-        - Energia consumida
-        - Rede consumida
-        - taxa de Convergência com Base na Perda:
-            Taxa de Convergência = (Perda(t)−Perda(t−1))/Perda(t−1)
+Como a quantidade de clientes selecionados impacta a energia disponível para outras atividades em um cenário com bateria?
+- Com bateria
+- Exp:
+    Variar fração de participação C entre 10% e 100%.
+    Medir o desempenho em 100 rodadas.
+    Encontrar acurácia máxima.
+    Medir quantas rodadas cada C levou para alcançar 75% e 90% da acurácia máxima.
+    Medir quanta energia e bytes foram transmitidos até alcançar 75% e 90% da acurácia máxima para cada C.
+    * Salvar: Estado inicial e final da bateria do cliente.
+    * 3 seeds
+    * Uma grade variando niid de (0.1, 0.3, 1.0)
 
-Teste da quantidade de clientes selecionados por rodada:
-    - Varia Fit Fraction: 2, 0.05, 0.1, 0.25, 0.5, 1.0
+Qual o impacto da variação da quantidade de clientes selecionados no desempenho e custo do aprendizado?
+- Uma fronteira de pareto relacionado o desempenho do modelo e o custo em energia/comunicação/pegada de carbono.
+- Exp:
+    1 - Definir ponto crítico a partir de CriticalFL ou Ecolearn.
+    2 - Grade de políticas 2×2 (duas fases): C antes ∈ {5,10,20,40,60,80,100} e  C depois no mesmo conjunto. Para cada
+    par, treine até T rodadas (ponto crítico) mantendo o resto idêntico (semeadura, épocas locais, LR, agregação).
+    3 - Medições por execução: acurácia em teste e energia consumida
+    4 - Fronteira de Pareto: Faça non-dominated sorting e retenha os pontos não-dominados (C antes,C depois).
+    Identifique o joelho da curva (melhor compromisso).
+    * 3 seeds
+    * Uma grade variando niid de (0.1, 0.3, 1.0)

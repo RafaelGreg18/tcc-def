@@ -6,6 +6,6 @@ do flower para mapeamento e usar a quantidade de rodadas normal. (ok - há possi
 mais agradável de organizar o código. Portanto, resolvi deixar com está e salvar resultados como rodada-1. Rodada 1 não
 faz nada e apenas serve para responder os valores ao servidor, e rodada 2 é encarada como 1 e assim por diante.)
 4 - Adicionar consumo de energia e tempo (ok)
-5 - Adicionar escolha se usa bateria
+5 - Adicionar escolha se usa bateria (ok)
 6 - Adicionar calculo/log de métricas
-
+7 - Adicionar twophasefedavg

@@ -44,7 +44,7 @@ def get_selected_cid_training_energy(client_profile, selected_cids_time, client_
         idle_joules = idle_time * client_profile[cid]["idle_mJ"]
         total = proc_joules + comm_joules + idle_joules
         if use_battery:
-            cid_joule_consumption[cid] = min(total, client_profile[cid]["current_battery_joules"])
+            cid_joule_consumption[cid] = min(total, client_profile[cid]["current_battery_mJ"])
         else:
             cid_joule_consumption[cid] = total
 
@@ -73,7 +73,7 @@ def get_unselected_cid_consumption(client_profile, unselected_cids, elapsed_time
             "idle_mJ"]  # converter perfil de bateria para mJ e atualizar códigos anteriores.
 
         if use_battery:
-            cid_joule_consumption[cid] = min(idle_joules, client_profile[cid]["current_battery_joules"])
+            cid_joule_consumption[cid] = min(idle_joules, client_profile[cid]["current_battery_mJ"])
         else:
             cid_joule_consumption[cid] = idle_joules
 

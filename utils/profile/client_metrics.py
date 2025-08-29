@@ -151,20 +151,20 @@ def get_clients_battery(
     # Atribui baterias
     for cid in low_slice:
         prof = profiles[cid].copy()
-        prof["current_battery_joules"] = low_J
-        prof["initial_battery_joules"] = low_J
+        prof["current_battery_mJ"] = low_J
+        prof["initial_battery_mJ"] = low_J
         profiles[cid] = prof
 
     for cid in med_slice:
         prof = profiles[cid].copy()
-        prof["current_battery_joules"] = med_J
-        prof["initial_battery_joules"] = med_J
+        prof["current_battery_mJ"] = med_J
+        prof["initial_battery_mJ"] = med_J
         profiles[cid] = prof
 
     for cid in high_slice:
         prof = profiles[cid].copy()
-        prof["current_battery_joules"] = high_J
-        prof["initial_battery_joules"] = high_J
+        prof["current_battery_mJ"] = high_J
+        prof["initial_battery_mJ"] = high_J
         profiles[cid] = prof
 
     return profiles

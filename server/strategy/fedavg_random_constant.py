@@ -1,3 +1,5 @@
+import datetime
+import os
 from logging import WARNING
 from typing import Optional
 
@@ -13,7 +15,21 @@ class FedAvgRandomConstant(BaseStrategy):
         super().__init__(*args, **kwargs)
 
     def _do_initialization(self, client_manager):
-        pass
+        current_date = datetime.datetime.now().strftime("%d-%m-%Y")
+        selection_name = self.context.run_config["selection-name"]
+        aggregation_name = self.context.run_config["aggregation-name"]
+        participants_name = self.context.run_config["participants-name"]
+        dataset_id = self.context.run_config["hugginface-id"].split('/')[-1]
+        seed = self.context.run_config["seed"]
+        dir = self.context.run_config["dir-alpha"]
+
+        output_dir = os.path.join("outputs", current_date,
+                                  f"{aggregation_name}_{selection_name}_{participants_name}_{self.num_participants}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
+        os.makedirs(output_dir, exist_ok=True)
+
+        self.model_performance_path = os.path.join(output_dir, "model_performance.json")
+        self.system_performance_path = os.path.join(output_dir, "system_performance.json")
+        self.fl_cli_state_path = os.path.join(output_dir, "client_state.json")
 
     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
         return self.num_participants, self.num_participants

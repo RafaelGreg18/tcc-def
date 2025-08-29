@@ -47,6 +47,13 @@ class BaseStrategy(Strategy):
         self.cid_map = None
         self.available_cids = [cid for cid in range(self.num_clients)]
         self.use_battery = context.run_config["use-battery"]
+        self.client_state_to_save = None
+        self.fl_cli_state_path = None
+        self.system_metrics_to_save = None
+        self.system_performance_path = None
+        self.system_metrics_to_save = {}
+        self.model_performance_path = None
+        self.performance_metrics_to_save = {}
 
     def __repr__(self) -> str:
         return self.repr
@@ -58,6 +65,10 @@ class BaseStrategy(Strategy):
         client_manager.wait_for(self.num_clients)
         available_cids = client_manager.all().keys()
         self.cid_map = {cid: -1 for cid in available_cids}
+        self.client_state_to_save = {cid: {"max_battery_mJ": self.profiles[cid]["max_battery_mJ"],
+                                           "initial_battery_mJ": self.profiles[cid]["initial_battery_mJ"],
+                                           "final_battery_mJ": 0} for cid in self.profiles}
+
         self._do_initialization(client_manager)
 
         initial_parameters = self.initial_parameters
@@ -76,6 +87,16 @@ class BaseStrategy(Strategy):
         if eval_res is None:
             return None
         loss, metrics = eval_res
+
+        my_results = {"cen_loss": loss, **metrics}
+
+        # Insert into local dictionary
+        self.performance_metrics_to_save[server_round] = my_results
+
+        # Save metrics as json
+        with open(self.model_performance_path, "w") as json_file:
+            json.dump(self.performance_metrics_to_save, json_file, indent=2)
+
         return loss, metrics
 
     def configure_fit(
@@ -94,7 +115,7 @@ class BaseStrategy(Strategy):
                     cid = self.cid_map[flwr_cid]
                     if cid == -1:
                         exit(-1)
-                    if self.profiles[cid]["current_battery_joules"] <= 0:
+                    if self.profiles[cid]["current_battery_mJ"] <= 0:
                         if flwr_cid in all_clients:
                             clients_to_unregister.append(flwr_cid)
                             self.available_cids.remove(cid)
@@ -148,11 +169,21 @@ class BaseStrategy(Strategy):
             (cids_joules_consumption, cids_carbon_footprint, selected_cids_training_time,
              selected_cids_training_joules_consumption, selected_cids_training_carbon_footprint,
              unselected_cids_training_joules_consumption, unselected_cids_training_carbon_footprint,
-             max_comm_round_time) = self.get_cids_joules_and_carbon(results)
+             max_comm_round_time, num_transmited_bytes) = self.get_cids_joules_and_carbon(results)
 
             if self.use_battery:
                 # 2. Update profiles
                 self.update_cids_current_battery(cids_joules_consumption)
+                # 3. Saving client final battery state
+                self.save_cids_state(server_round)
+                # 4. Get all clients breaking minimum battery threshold (budget)
+                num_depleted, num_expired_thresh = self.get_expired_and_depleted()
+            else:
+                num_depleted = num_expired_thresh = 0
+
+            # Saving systemic values
+            self.save_round_system_metrics(cids_carbon_footprint, cids_joules_consumption,
+                                           num_depleted, num_expired_thresh, num_transmited_bytes, server_round)
 
         if self.use_battery:
             # Removing all results from clients that depleted battery in training
@@ -180,8 +211,9 @@ class BaseStrategy(Strategy):
     def get_cids_joules_and_carbon(self, results):
         # Get for each selected client energy and carbon footprint
         selected_cids_training_dataset_size = get_selected_cids_and_local_training_data_size(results)
-        epochs = self.context.run_config["epochs"]
-        model_size = self.context.run_config["model-size"]
+        epochs = int(self.context.run_config["epochs"])
+        model_size = int(self.context.run_config["model-size"])
+        num_transmited_bytes = len(selected_cids_training_dataset_size) * model_size + model_size
         selected_cids_training_time, max_comm_round_time = get_training_time_per_cid(self.profiles,
                                                                                      selected_cids_training_dataset_size,
                                                                                      model_size, epochs)
@@ -219,20 +251,20 @@ class BaseStrategy(Strategy):
         return (cids_joules_consumption, cids_carbon_footprint, selected_cids_training_time,
                 selected_cids_training_joules_consumption, selected_cids_training_carbon_footprint,
                 unselected_cids_training_joules_consumption, unselected_cids_training_carbon_footprint,
-                max_comm_round_time)
+                max_comm_round_time, num_transmited_bytes)
 
     def update_cids_current_battery(self, cids_joules_consumption):
         for cid in cids_joules_consumption.keys():
             cid_joules_consumption = cids_joules_consumption[cid]
-            self.profiles[cid]["current_battery_joules"] -= cid_joules_consumption
-            if self.profiles[cid]["current_battery_joules"] < 0:
-                self.profiles[cid]["current_battery_joules"] = 0
+            self.profiles[cid]["current_battery_mJ"] -= cid_joules_consumption
+            if self.profiles[cid]["current_battery_mJ"] < 0:
+                self.profiles[cid]["current_battery_mJ"] = 0
 
     def remove_depleted_cids(self, results):
         to_remove = []
         for idx, result in enumerate(results):
             cid = result[1].metrics["cid"]
-            if self.profiles[cid]["current_battery_joules"] <= 0:
+            if self.profiles[cid]["current_battery_mJ"] <= 0:
                 to_remove.append(idx)
         to_aggregate = []
         for idx, result in enumerate(results):
@@ -240,6 +272,40 @@ class BaseStrategy(Strategy):
                 to_aggregate.append(result)
         return to_aggregate
 
+    def get_expired_and_depleted(self):
+        min_battery_percentual = self.context.run_config["battery-threshold"]
+        num_expired_thresh = 0
+        num_depleted = 0
+        for cid in range(self.num_clients):
+            ratio = self.profiles[cid]["current_battery_mJ"] / self.profiles[cid]["max_battery_mJ"]
+            if ratio <= min_battery_percentual:
+                num_expired_thresh += 1
+                if self.profiles[cid]["current_battery_mJ"] == 0:
+                    num_depleted += 1
+        return num_depleted, num_expired_thresh
+
+    def save_cids_state(self, server_round):
+        if server_round == self.context.run_config["num-rounds"] + 1:
+            for cid in self.profiles:
+                self.client_state_to_save[cid]["final_battery_mJ"] = self.profiles[cid]["current_battery_mJ"]
+
+            # Save metrics as json
+            with open(self.fl_cli_state_path, "w") as json_file:
+                json.dump(self.client_state_to_save, json_file, indent=2)
+
+    def save_round_system_metrics(self, cids_carbon_footprint, cids_joules_consumption,
+                                  num_depleted, num_expired_thresh, num_transmited_bytes, server_round):
+        my_results = {"total_mJ": sum(cids_joules_consumption.values()),
+                      "total_ceq": sum(cids_carbon_footprint.values()),
+                      "num_expired_thresh": num_expired_thresh,
+                      "num_depleted": num_depleted,
+                      "num_transmited_bytes": num_transmited_bytes
+                      }
+        # Insert into local dictionary
+        self.system_metrics_to_save[server_round] = my_results
+        # Save metrics as json
+        with open(self.system_performance_path, "w") as json_file:
+            json.dump(self.system_metrics_to_save, json_file, indent=2)
 
     @abstractmethod
     def _do_initialization(self, client_manager) -> None:

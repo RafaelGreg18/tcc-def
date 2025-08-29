@@ -60,7 +60,7 @@ epochs = 10 #real deploy: 5
 learning-rate = 1e-3 #CRNNResNetAttn: 3e-4 Others: 1e-3
 
 # device profile
-use-battery = false
+use-battery = true
 prefer-time = "EQUAL" # SLOW, EQUAL, FAST
 prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
 prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
@@ -79,7 +79,7 @@ dir-alpha = 1.0 #0.1, 0.3, 1.0
 batch-size = 16 #speech_commands: 8 others:16
 
 # client
-battery-threshold = 0.05
+battery-threshold = 0.1
 
 # strategy
 participants-name = "constant"
