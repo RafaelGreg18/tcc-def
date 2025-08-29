@@ -143,10 +143,10 @@ def get_clients_battery(
     med_slice = cids[num_low : num_low + num_med]
     high_slice = cids[num_low + num_med : num_low + num_med + num_high]
 
-    # Converte kJ -> J
-    low_J = float(kj_low) * 1000.0
-    med_J = float(kj_medium) * 1000.0
-    high_J = float(kj_high) * 1000.0
+    # Converte kJ -> J -> mJ
+    low_J = float(kj_low) * 1000.0 * 1000.0
+    med_J = float(kj_medium) * 1000.0 * 1000.0
+    high_J = float(kj_high) * 1000.0 * 1000.0
 
     # Atribui baterias
     for cid in low_slice:

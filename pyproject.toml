@@ -27,7 +27,6 @@ clientapp = "client_app:app"
 [tool.flwr.app.config]
 # global
 seed = 1
-use-profile = true
 root-model-dir = "./model/"
 root-profiles-dir = "./profiles/"
 root-outputs-dir = "./outputs/"

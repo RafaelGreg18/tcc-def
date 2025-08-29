@@ -1,3 +1,4 @@
+import json
 from abc import abstractmethod
 from logging import ERROR
 from typing import Callable, Optional, Union
@@ -8,14 +9,17 @@ from flwr.server import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import Strategy
 
+from utils.simulation.profile import get_selected_cids_and_local_training_data_size, get_training_time_per_cid, \
+    get_selected_cid_training_energy, get_cid_training_carbon_footprint, get_unselected_cid_consumption
+
 WARNING_MIN_AVAILABLE_CLIENTS_TOO_LOW = """
 Setting `num_participants` lower than 2 or `num_evaluators` greater `than num_clients` cause the server to fail.
 """
 
 
 class BaseStrategy(Strategy):
-    def __init__(self, *, repr: str, num_clients: int, num_participants: int, num_evaluators: int, context: Context,
-                 initial_parameters: Parameters, fit_metrics_aggregation_fn: MetricsAggregationFn,
+    def __init__(self, *, repr: str, num_clients: int, profiles: dict, num_participants: int, num_evaluators: int,
+                 context: Context, initial_parameters: Parameters, fit_metrics_aggregation_fn: MetricsAggregationFn,
                  evaluate_metrics_aggregation_fn: MetricsAggregationFn, on_fit_config_fn: Callable,
                  on_eval_config_fn: Callable, evaluate_fn: Callable):
         super().__init__()
@@ -29,6 +33,7 @@ class BaseStrategy(Strategy):
 
         self.repr = repr
         self.num_clients = num_clients
+        self.profiles = profiles
         self.num_participants = num_participants
         self.num_evaluators = num_evaluators
         self.context = context
@@ -40,6 +45,8 @@ class BaseStrategy(Strategy):
         self.evaluate_fn = evaluate_fn
         # internal
         self.cid_map = None
+        self.available_cids = [cid for cid in range(self.num_clients)]
+        self.use_battery = context.run_config["use-battery"]
 
     def __repr__(self) -> str:
         return self.repr
@@ -76,23 +83,26 @@ class BaseStrategy(Strategy):
     ) -> list[tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
         if server_round == 1:
-            # config = {}
-            # if self.on_fit_config_fn is not None:
-            #     # Custom fit config function provided
-            #     config = self.on_fit_config_fn(server_round)
-            # fit_ins = FitIns(parameters, config)
-            #
-            # all_clients = client_manager.all()
-            #
-            # sample_size = min_num_clients = len(all_clients)
-            #
-            # clients = client_manager.sample(
-            #     num_clients=sample_size, min_num_clients=min_num_clients
-            # )
-            #
-            # return [(client, fit_ins) for client in clients]
             return []
         else:
+            if self.context.run_config["use-battery"]:
+                # Removing depleted battery clients
+                all_clients = client_manager.all()
+                clients_to_unregister = []
+
+                for flwr_cid in all_clients.keys():
+                    cid = self.cid_map[flwr_cid]
+                    if cid == -1:
+                        exit(-1)
+                    if self.profiles[cid]["current_battery_joules"] <= 0:
+                        if flwr_cid in all_clients:
+                            clients_to_unregister.append(flwr_cid)
+                            self.available_cids.remove(cid)
+
+                for flwr_cid in clients_to_unregister:
+                    client = all_clients[flwr_cid]
+                    client_manager.unregister(client)
+
             return self._do_configure_fit(server_round, parameters, client_manager)
 
     def configure_evaluate(
@@ -134,8 +144,23 @@ class BaseStrategy(Strategy):
             failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
     ) -> tuple[Optional[Parameters], dict[str, Scalar]]:
         """Aggregate fit results using weighted average."""
+        if server_round > 1:
+            (cids_joules_consumption, cids_carbon_footprint, selected_cids_training_time,
+             selected_cids_training_joules_consumption, selected_cids_training_carbon_footprint,
+             unselected_cids_training_joules_consumption, unselected_cids_training_carbon_footprint,
+             max_comm_round_time) = self.get_cids_joules_and_carbon(results)
 
-        return self._do_aggregate_fit(server_round, results, failures)
+            if self.use_battery:
+                # 2. Update profiles
+                self.update_cids_current_battery(cids_joules_consumption)
+
+        if self.use_battery:
+            # Removing all results from clients that depleted battery in training
+            to_aggregate = self.remove_depleted_cids(results)
+        else:
+            to_aggregate = results
+
+        return self._do_aggregate_fit(server_round, to_aggregate, failures)
 
     def aggregate_evaluate(
             self,
@@ -151,6 +176,70 @@ class BaseStrategy(Strategy):
         loss_aggregated, metrics_aggregated = self._do_aggregate_evaluate(server_round, results, failures)
 
         return loss_aggregated, metrics_aggregated
+
+    def get_cids_joules_and_carbon(self, results):
+        # Get for each selected client energy and carbon footprint
+        selected_cids_training_dataset_size = get_selected_cids_and_local_training_data_size(results)
+        epochs = self.context.run_config["epochs"]
+        model_size = self.context.run_config["model-size"]
+        selected_cids_training_time, max_comm_round_time = get_training_time_per_cid(self.profiles,
+                                                                                     selected_cids_training_dataset_size,
+                                                                                     model_size, epochs)
+        for cid in selected_cids_training_time:
+            self.profiles[cid]["comm_round_time"] = selected_cids_training_time[cid]["total"]
+
+        selected_cids_training_joules_consumption = get_selected_cid_training_energy(self.profiles,
+                                                                                     selected_cids_training_time,
+                                                                                     selected_cids_training_dataset_size,
+                                                                                     model_size, epochs,
+                                                                                     max_comm_round_time,
+                                                                                     self.use_battery)
+
+        selected_cids_training_carbon_footprint = get_cid_training_carbon_footprint(self.profiles,
+                                                                                    selected_cids_training_joules_consumption)
+
+        # Get for each unselected client energy and carbon footprint
+        unselected_cids = []
+        for cid in self.available_cids:
+            if cid not in list(selected_cids_training_dataset_size.keys()):
+                unselected_cids.append(cid)
+
+        unselected_cids_training_joules_consumption = get_unselected_cid_consumption(self.profiles, unselected_cids,
+                                                                                     max_comm_round_time,
+                                                                                     self.use_battery)
+
+        unselected_cids_training_carbon_footprint = get_cid_training_carbon_footprint(self.profiles,
+                                                                                      unselected_cids_training_joules_consumption)
+
+        # Merging all client consumption
+        cids_joules_consumption = {**selected_cids_training_joules_consumption,
+                                   **unselected_cids_training_joules_consumption}
+        cids_carbon_footprint = {**selected_cids_training_carbon_footprint, **unselected_cids_training_carbon_footprint}
+
+        return (cids_joules_consumption, cids_carbon_footprint, selected_cids_training_time,
+                selected_cids_training_joules_consumption, selected_cids_training_carbon_footprint,
+                unselected_cids_training_joules_consumption, unselected_cids_training_carbon_footprint,
+                max_comm_round_time)
+
+    def update_cids_current_battery(self, cids_joules_consumption):
+        for cid in cids_joules_consumption.keys():
+            cid_joules_consumption = cids_joules_consumption[cid]
+            self.profiles[cid]["current_battery_joules"] -= cid_joules_consumption
+            if self.profiles[cid]["current_battery_joules"] < 0:
+                self.profiles[cid]["current_battery_joules"] = 0
+
+    def remove_depleted_cids(self, results):
+        to_remove = []
+        for idx, result in enumerate(results):
+            cid = result[1].metrics["cid"]
+            if self.profiles[cid]["current_battery_joules"] <= 0:
+                to_remove.append(idx)
+        to_aggregate = []
+        for idx, result in enumerate(results):
+            if idx not in to_remove:
+                to_aggregate.append(result)
+        return to_aggregate
+
 
     @abstractmethod
     def _do_initialization(self, client_manager) -> None:

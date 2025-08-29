@@ -34,7 +34,6 @@ class ConfigRepository:
         # Defaults
         # global
         cfg.setdefault("seed", 1)
-        cfg.setdefault("use-profile", True)
         cfg.setdefault("root-model-dir", "./model/")
         cfg.setdefault("root-profile-dir", "./profiles/")
         cfg.setdefault("root-outputs-dir", "./outputs/")
@@ -78,7 +77,6 @@ class ConfigRepository:
         # Processing
         # global
         cfg["seed"] = int(cfg["seed"])
-        cfg["use-profile"] = bool(cfg["use-profile"])
         os.makedirs(cfg["root-model-dir"], exist_ok=True)
         os.makedirs(cfg["root-profile-dir"], exist_ok=True)
         os.makedirs(cfg["root-outputs-dir"], exist_ok=True)
@@ -130,8 +128,6 @@ class ConfigRepository:
                 "Device carbon intensity distribution config (prefer-carbon) must be: LOW, HIGH or UNIFORM")
         if cfg["battery-profile-low"] <= 0 or cfg["battery-profile-medium"] <= 0 or cfg["battery-profile-high"] <= 0:
             errors.append("Some battery profile is <= 0")
-        if type(cfg["use-profile"]) != bool:
-            errors.append(f"You must use bool to control the profile usage in simulation: true or false")
         if errors:
             raise ValueError("Config errors:\n" + "\n".join(errors))
 

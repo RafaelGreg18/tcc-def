@@ -169,6 +169,7 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
             if participants_name == "constant":
                 strategy = FedAvgRandomConstant(repr="FedAvgRandomConstant",
                                                 num_clients=num_clients,
+                                                profiles=profiles,
                                                 num_participants=num_participants,
                                                 num_evaluators=num_evaluators,
                                                 context=context,
@@ -181,16 +182,6 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
 
     return strategy
 
-
-def get_profiles(context):
-    profiles_path = context.run_config[
-                        "root-profiles-dir"] + "profiles.json"
-    with open(profiles_path, "r") as file:
-        profiles = json.load(file)
-    profiles = {int(k): v for k, v in profiles.items()}
-    return profiles
-
-
 def get_server_app_components(context, strategy):
     num_rounds = context.run_config["num-rounds"] + 1
 
@@ -199,3 +190,11 @@ def get_server_app_components(context, strategy):
     server.set_max_workers(int(0.1 * int(context.run_config["num-clients"])))
     components = ServerAppComponents(strategy=strategy, config=config, server=server)
     return components
+
+def get_profiles(context):
+    profiles_path = context.run_config[
+                        "root-profiles-dir"] + "profiles.json"
+    with open(profiles_path, "r") as file:
+        profiles = json.load(file)
+    profiles = {int(k): v for k, v in profiles.items()}
+    return profiles

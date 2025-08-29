@@ -5,7 +5,7 @@
     "training_mJ": 236.83080179708304,
     "evaluation_mJ": 92.652466730625,
     "idle_mJ": 7.3,
-    "max_battery_joules": 432000.0
+    "max_battery_mJ": 432000000.0
   },
   "JetsonOrinNano": {
     "training_ms": 18.268569791666668,
@@ -13,7 +13,7 @@
     "training_mJ": 201.85389155125006,
     "evaluation_mJ": 77.4357450385417,
     "idle_mJ": 5.09,
-    "max_battery_joules": 432000.0
+    "max_battery_mJ": 432000000.0
   },
   "LattePandaDelta3": {
     "training_ms": 223.7304875,
@@ -21,7 +21,7 @@
     "training_mJ": 3115.4922873645833,
     "evaluation_mJ": 949.5233839750013,
     "idle_mJ": 6.87,
-    "max_battery_joules": 432000.0
+    "max_battery_mJ": 432000000.0
   },
   "OrangePi5B": {
     "training_ms": 235.592925,
@@ -29,6 +29,6 @@
     "training_mJ": 2402.098552735417,
     "evaluation_mJ": 791.8797748999995,
     "idle_mJ": 3.32,
-    "max_battery_joules": 432000.0
+    "max_battery_mJ": 432000000.0
   }
 }
