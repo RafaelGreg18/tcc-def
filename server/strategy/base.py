@@ -65,9 +65,10 @@ class BaseStrategy(Strategy):
         client_manager.wait_for(self.num_clients)
         available_cids = client_manager.all().keys()
         self.cid_map = {cid: -1 for cid in available_cids}
-        self.client_state_to_save = {cid: {"max_battery_mJ": self.profiles[cid]["max_battery_mJ"],
-                                           "initial_battery_mJ": self.profiles[cid]["initial_battery_mJ"],
-                                           "final_battery_mJ": 0} for cid in self.profiles}
+        if self.use_battery:
+            self.client_state_to_save = {cid: {"max_battery_mJ": self.profiles[cid]["max_battery_mJ"],
+                                               "initial_battery_mJ": self.profiles[cid]["initial_battery_mJ"],
+                                               "final_battery_mJ": 0} for cid in self.profiles}
 
         self._do_initialization(client_manager)
 
