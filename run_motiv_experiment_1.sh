@@ -17,7 +17,7 @@ for i in {1..3}; do
 
   # criar perfis
   echo "Criando perfis"
-  python gen_sim_cid_profile.py --seed $i
+  python gen_sim_profile.py --seed $i
 
   #participantsxperformancexcost
   for participants in 5 10 20 40 80 100; do
