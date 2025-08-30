@@ -49,18 +49,18 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-model-name = "simplecnn"
+model-name = "Shufflenet_v2_x0_5"
 # shape
-input-shape = "(3, 32, 32)"
-#input-shape = "(3,224,224)"
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
-epochs = 10 #real deploy: 5
+epochs = 5 #real deploy: 5
 learning-rate = 1e-3 #CRNNResNetAttn: 3e-4 Others: 1e-3
 
 # device profile
-use-battery = true
+use-battery = false
 prefer-time = "EQUAL" # SLOW, EQUAL, FAST
 prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
 prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
@@ -86,7 +86,7 @@ participants-name = "constant"
 selection-name = "random"
 aggregation-name = "fedavg"
 num-clients = 100 #shakespeare:903 cifar10:100 speech_commands:2112
-num-rounds = 20 #100
+num-rounds = 100 #100
 num-participants = 10 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
 num-evaluators = 0
 
