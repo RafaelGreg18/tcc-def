@@ -24,7 +24,7 @@ class FedAvgRandomConstant(BaseStrategy):
         dir = self.context.run_config["dir-alpha"]
 
         output_dir = os.path.join("outputs", current_date,
-                                  f"{aggregation_name}_{selection_name}_{participants_name}_{self.num_participants}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
+                                  f"{aggregation_name}_{selection_name}_{participants_name}_{self.num_participants}_battery_{self.use_battery}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
         os.makedirs(output_dir, exist_ok=True)
 
         self.model_performance_path = os.path.join(output_dir, "model_performance.json")
