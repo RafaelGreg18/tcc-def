@@ -37,7 +37,7 @@ root-outputs-dir = "./outputs/"
 # "./utils/profile/Resnext50_32x4d.json"
 # "./utils/profile/Lstm.json"
 # "./utils/profile/CRNNResNetAttn.json"
-devices-profile-path = "./utils/profile/Shufflenet_v2_x0_5.json"
+devices-profile-path = "./utils/profile/Mobilenet_v2.json"
 net-speed-path = "./utils/profile/bandwidth.json"
 carbon-data-path = "./utils/profile/carbon.json"
 
@@ -49,14 +49,14 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-model-name = "Shufflenet_v2_x0_5"
+model-name = "Mobilenet_v2"
 # shape
 #input-shape = "(3, 32, 32)"
 input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
-epochs = 5 #real deploy: 5
+epochs = 10 #real deploy: 5
 learning-rate = 1e-3 #CRNNResNetAttn: 3e-4 Others: 1e-3
 
 # device profile
