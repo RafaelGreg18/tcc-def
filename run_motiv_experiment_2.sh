@@ -9,7 +9,7 @@ fi
 export CUDA_VISIBLE_DEVICES=$1
 
 # Run each configuration 3 times
-for i in {1..3}; do
+for i in {1..1}; do
   echo "Seed $i"
   # criar modelo
   echo "Criando modelo"
