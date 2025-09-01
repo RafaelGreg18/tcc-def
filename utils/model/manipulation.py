@@ -20,16 +20,20 @@ class ModelPersistence:
         return model
 
 
-def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
+def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, learning_rate):
     model.to(device)
     model.train()
     squared_sum = num_samples = 0
     key = DatasetConfig.BATCH_KEY[dataset_id]
     value = DatasetConfig.BATCH_VALUE[dataset_id]
 
+    grad_norm = 0
+    GNorm = []
+
     for epoch in range(1, epochs + 1):
         total_loss = 0
         correct_pred = total_pred = 0
+        epoch_grad_norm = 0
 
         for batch in dataloader:
             if isinstance(batch, dict):
@@ -59,15 +63,27 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
             optimizer.step()
             total_loss += loss.item() * y.size(0)
 
+            temp_norm = 0
+            for parms in model.parameters():
+                gnorm = parms.grad.detach().data.norm(2)
+                temp_norm = temp_norm + (gnorm.item()) ** 2
+            if epoch_grad_norm == 0:
+                epoch_grad_norm = temp_norm
+            else:
+                epoch_grad_norm = epoch_grad_norm + temp_norm
+
+        GNorm.append(epoch_grad_norm)
+
         if epoch == epochs:
             avg_acc = correct_pred / total_pred
             avg_loss = total_loss / total_pred
+            grad_norm = (np.mean(GNorm) * learning_rate).item()
             if criterion.reduction == "none":
                 stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))
             else:
                 stat_util = 0
 
-    return avg_loss, avg_acc, stat_util
+    return avg_loss, avg_acc, stat_util, grad_norm
 
 
 def test(model, dataloader, device, dataset_id):

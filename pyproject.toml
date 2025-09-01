@@ -49,10 +49,10 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-model-name = "Mobilenet_v2"
+model-name = "simplecnn"
 # shape
-#input-shape = "(3, 32, 32)"
-input-shape = "(3,224,224)"
+input-shape = "(3, 32, 32)"
+#input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
@@ -90,6 +90,13 @@ num-rounds = 100 #100
 num-participants = 10 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
 num-evaluators = 0
 
+#TwoPhase
+num-participants-bcp = 10
+num-participants-acp = 10
+# smooth-window = 5
+# tau-deriv = 0.005
+delta-thresh = 0.01
+
 [tool.flwr.federations]
 default = "local-simulation"
 
@@ -113,3 +120,10 @@ options.backend.client-resources.num-cpus = 2
 options.backend.client-resources.num-gpus = 0.5
 options.backend.init_args.num_cpus = 25
 options.backend.init_args.num_gpus = 6
+
+[tool.flwr.federations.gpu-sim-dl-17]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 25
+options.backend.init_args.num_gpus = 3

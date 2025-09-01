@@ -69,8 +69,13 @@ class ConfigRepository:
         cfg.setdefault("aggregation-name", "fedavg")
         cfg.setdefault("num-clients", 100)
         cfg.setdefault("num-rounds", 2)
-        cfg.setdefault("num-participants", 0.1)
-        cfg.setdefault("num-evaluators", 0.0)
+        cfg.setdefault("num-participants", 10)
+        cfg.setdefault("num-evaluators", 0)
+
+        #two-phase
+        cfg.setdefault("num-participants-bcp", 10)
+        cfg.setdefault("num-participants-acp", 10)
+
         # client
         cfg.setdefault("battery-threshold", 0.1)
 
@@ -102,6 +107,10 @@ class ConfigRepository:
         cfg["num-rounds"] = int(cfg["num-rounds"])
         cfg["num-participants"] = int(cfg["num-participants"])
         cfg["num-evaluators"] = int(cfg["num-evaluators"])
+
+        #two-phase
+        cfg["num-participants-bpc"] = int(cfg["num-participants-bcp"])
+        cfg["num-participants-apc"] = int(cfg["num-participants-acp"])
 
         # client
         cfg["battery-threshold"] = float(cfg["battery-threshold"])

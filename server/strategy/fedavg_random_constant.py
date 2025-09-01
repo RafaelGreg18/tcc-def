@@ -35,7 +35,7 @@ class FedAvgRandomConstant(BaseStrategy):
         return self.num_participants, self.num_participants
 
     def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:
-        return self.num_evaluators, self.num_participants
+        return self.num_evaluators, self.num_participants # num_eval > num_part
 
     def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
         config = {}

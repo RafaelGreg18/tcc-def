@@ -11,6 +11,20 @@ A quantidade de clientes selecionados impacta o desempenho e o custo do aprendiz
     * 3 seeds
     * Uma grade variando niid de (0.1, 0.3, 1.0)
 
+Qual o impacto da variação da quantidade de clientes selecionados no desempenho e custo do aprendizado?
+- Uma fronteira de pareto relacionado o desempenho do modelo e o custo em energia/comunicação/pegada de carbono.
+- Exp:
+    1 - Definir ponto crítico a partir de CriticalFL ou Ecolearn.
+    2 - Grade de políticas 2×2 (duas fases): C antes ∈ {5,10,20} e  C depois no mesmo conjunto. Para cada
+    par, treine até T rodadas (ponto crítico) mantendo o resto idêntico (semeadura, épocas locais, LR, agregação).
+    3 - Medições por execução: acurácia em teste e energia consumida
+    4 - Fronteira de Pareto: Faça non-dominated sorting e retenha os pontos não-dominados (C antes,C depois).
+    Identifique o joelho da curva (melhor compromisso).
+    * 3 seeds
+    * Uma grade variando niid de (0.1, 0.3, 1.0)
+
+========================================================================================================================
+Este experimento abaixo não farei: deixar como ablação
 Como a quantidade de clientes selecionados impacta a energia disponível para outras atividades em um cenário com bateria?
 - Com bateria
 - Exp:
@@ -23,14 +37,3 @@ Como a quantidade de clientes selecionados impacta a energia disponível para ou
     * 3 seeds
     * Uma grade variando niid de (0.1, 0.3, 1.0)
 
-Qual o impacto da variação da quantidade de clientes selecionados no desempenho e custo do aprendizado?
-- Uma fronteira de pareto relacionado o desempenho do modelo e o custo em energia/comunicação/pegada de carbono.
-- Exp:
-    1 - Definir ponto crítico a partir de CriticalFL ou Ecolearn.
-    2 - Grade de políticas 2×2 (duas fases): C antes ∈ {5,10,20,40,60,80,100} e  C depois no mesmo conjunto. Para cada
-    par, treine até T rodadas (ponto crítico) mantendo o resto idêntico (semeadura, épocas locais, LR, agregação).
-    3 - Medições por execução: acurácia em teste e energia consumida
-    4 - Fronteira de Pareto: Faça non-dominated sorting e retenha os pontos não-dominados (C antes,C depois).
-    Identifique o joelho da curva (melhor compromisso).
-    * 3 seeds
-    * Uma grade variando niid de (0.1, 0.3, 1.0)

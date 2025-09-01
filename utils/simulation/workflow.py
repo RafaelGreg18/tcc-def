@@ -8,6 +8,7 @@ from flwr.server import ServerConfig, Server, SimpleClientManager, ServerAppComp
 from torch.utils.data import DataLoader
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
+from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
 from utils.simulation.config import ConfigRepository
@@ -133,9 +134,11 @@ def get_fit_metrics_aggregation_fn():
         accuracies = [num_examples * m["acc"] for num_examples, m in metrics]
         losses = [num_examples * m["loss"] for num_examples, m in metrics]
         examples = [num_examples for num_examples, _ in metrics]
+        fgn = [num_examples * m["fgn"] for num_examples, m in metrics]
 
         # Aggregate and return custom metric (weighted average)
-        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples)}
+        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples),
+                "fgn": sum(fgn) / sum(examples)}
 
     return handle_fit_metrics
 
@@ -179,8 +182,22 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
                                                 on_fit_config_fn=on_fit_config_fn,
                                                 on_eval_config_fn=on_eval_config_fn,
                                                 evaluate_fn=evaluate_fn)
+            elif participants_name == "twophase":
+                strategy = FedAvgRandomConstantTwoPhase(repr="FedAvgRandomConstantTwoPhase",
+                                                        num_clients=num_clients,
+                                                        profiles=profiles,
+                                                        num_participants=num_participants,
+                                                        num_evaluators=num_evaluators,
+                                                        context=context,
+                                                        initial_parameters=initial_parameters,
+                                                        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+                                                        evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+                                                        on_fit_config_fn=on_fit_config_fn,
+                                                        on_eval_config_fn=on_eval_config_fn,
+                                                        evaluate_fn=evaluate_fn)
 
     return strategy
+
 
 def get_server_app_components(context, strategy):
     num_rounds = context.run_config["num-rounds"] + 1
@@ -190,6 +207,7 @@ def get_server_app_components(context, strategy):
     server.set_max_workers(int(0.1 * int(context.run_config["num-clients"])))
     components = ServerAppComponents(strategy=strategy, config=config, server=server)
     return components
+
 
 def get_profiles(context):
     profiles_path = context.run_config[
