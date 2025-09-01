@@ -49,10 +49,10 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-model-name = "simplecnn"
+model-name = "Mobilenet_v2"
 # shape
-input-shape = "(3, 32, 32)"
-#input-shape = "(3,224,224)"
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
