@@ -9,7 +9,7 @@ fi
 export CUDA_VISIBLE_DEVICES=$1
 
 # Run each configuration 3 times
-for i in {1..5}; do
+for i in {1..3}; do
   echo "Seed $i"
   # criar modelo
   echo "Criando modelo"
@@ -22,6 +22,6 @@ for i in {1..5}; do
   #participantsxperformancexcost
    for alpha in 0.1 0.3 1.0; do
     echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-16 --run-config="seed=$i num-rounds=20 participants-name='criticalfl' dir-alpha=$alpha"
+    flwr run . gpu-sim-dl-02 --run-config="seed=$i num-rounds=20 participants-name='criticalfl' dir-alpha=$alpha"
   done
 done

@@ -127,3 +127,10 @@ options.backend.client-resources.num-cpus = 2
 options.backend.client-resources.num-gpus = 0.5
 options.backend.init_args.num_cpus = 25
 options.backend.init_args.num_gpus = 3
+
+[tool.flwr.federations.gpu-sim-dl-02]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 2
