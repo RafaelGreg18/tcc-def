@@ -50,6 +50,7 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Lstm"
 # "CRNNResNetAttn"
 model-name = "Mobilenet_v2"
+#model-name = "simplecnn"
 # shape
 #input-shape = "(3, 32, 32)"
 input-shape = "(3,224,224)"
@@ -93,9 +94,10 @@ num-evaluators = 0
 #TwoPhase
 num-participants-bcp = 10
 num-participants-acp = 10
-# smooth-window = 5
-# tau-deriv = 0.005
-delta-thresh = 0.01
+smooth-window = 5
+tau-deriv = 0.005
+#Critical
+
 
 [tool.flwr.federations]
 default = "local-simulation"
@@ -134,3 +136,10 @@ options.backend.client-resources.num-cpus = 1
 options.backend.client-resources.num-gpus = 0.5
 options.backend.init_args.num_cpus = 10
 options.backend.init_args.num_gpus = 2
+
+[tool.flwr.federations.gpu-sim-lrc]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 1
