@@ -33,12 +33,14 @@ class BaseClient(NumPyClient):
             optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-            avg_loss, avg_acc, stat_util, fgn = train(self.model, self.dataloader, epochs,
-                                                      criterion, optimizer, device, self.dataset_id, learning_rate)
+            avg_loss, avg_acc, stat_util, grad_norm = train(self.model, self.dataloader, epochs,
+                                                            criterion, optimizer, device, self.dataset_id,
+                                                            learning_rate)
 
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                                            "loss": avg_loss, "acc": avg_acc,
-                                                                           "stat_util": stat_util, "fgn": fgn}
+                                                                           "stat_util": stat_util,
+                                                                           "grad_norm": grad_norm}
 
     def evaluate(self, parameters, config):
         if int(config["server_round"]) > 1:

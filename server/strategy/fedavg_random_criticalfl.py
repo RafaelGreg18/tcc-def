@@ -14,9 +14,15 @@ from utils.strategy.critical_point import RollingSlope
 class FedAvgRandomCriticalFL(FedAvgRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prev_fgn = None
-        self.last_fgn = None
-        self.last_delta = None
+        # paper
+        # self.prev_fgn_paper = None
+        self.last_fgn_paper = 0
+        # self.last_delta_paper = None
+
+        # github
+        # self.prev_fgn_github = None
+        self.last_fgn_github = 0
+        # self.last_delta_github = None
 
     def _do_initialization(self, client_manager):
         current_date = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -56,12 +62,17 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
         if self.fit_metrics_aggregation_fn:
             fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
             metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-            self.prev_fgn = self.last_fgn
-            self.last_fgn = metrics_aggregated["fgn"]
+
+            # self.prev_fgn_paper = self.last_fgn_paper
+            self.last_fgn_paper = metrics_aggregated["fgn_paper"]
+
+            # self.prev_fgn_github = self.last_fgn_github
+            self.last_fgn_github = metrics_aggregated["fgn_github"]
+
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        self.update_cp()
+        # self.update_cp()
 
         return parameters_aggregated, metrics_aggregated
 
@@ -78,7 +89,7 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
             return None
         loss, metrics = eval_res
 
-        my_results = {"cen_loss": loss, "delta": self.last_delta, **metrics}
+        my_results = {"cen_loss": loss, "fgn_paper": self.last_fgn_paper, "fgn_github": self.last_fgn_github, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
@@ -89,6 +100,6 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
 
         return loss, metrics
 
-    def update_cp(self):
-        if (self.prev_fgn is not None) and (self.last_fgn is not None) and (self.prev_fgn > 0):
-            self.last_delta = (self.last_fgn - self.prev_fgn) / self.prev_fgn
+    # def update_cp(self):
+    #     if (self.prev_fgn_paper is not None) and (self.last_fgn_paper is not None) and (self.prev_fgn_paper > 0):
+    #         self.last_delta_paper = (self.last_fgn_paper - self.prev_fgn_paper) / self.prev_fgn_paper

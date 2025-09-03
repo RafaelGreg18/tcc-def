@@ -60,6 +60,8 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, l
             correct_pred += (predicted == y).sum().item()
 
             loss.backward()
+            #github fgn
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), 10)
             optimizer.step()
             total_loss += loss.item() * y.size(0)
 
