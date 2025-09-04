@@ -22,6 +22,6 @@ for i in {1..1}; do
   #participantsxperformancexcost
    for alpha in 0.1 0.3 1.0; do
     echo "Alpha $alpha"
-    flwr run . gpu-sim-lrc --run-config="seed=$i num-rounds=100 participants-name='criticalfl' dir-alpha=$alpha"
+    flwr run . gpu-sim-lrc --run-config="seed=$i num-rounds=150 participants-name='criticalfl' dir-alpha=$alpha"
   done
 done
