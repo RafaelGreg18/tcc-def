@@ -28,9 +28,10 @@ class BaseClient(NumPyClient):
             # define train config
             epochs = int(config["epochs"])
             learning_rate = float(config["learning_rate"])
+            weight_decay = float(config["weight_decay"])
 
             criterion = torch.nn.CrossEntropyLoss(reduction='none')
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
             avg_loss, avg_acc, stat_util, grad_norm = train(self.model, self.dataloader, epochs,

@@ -58,7 +58,8 @@ input-shape = "(3,224,224)"
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
 epochs = 10 #real deploy: 5
-learning-rate = 1e-3 #CRNNResNetAttn: 3e-4 Others: 1e-3
+learning-rate = 1e-2 #CRNNResNetAttn: 3e-4 Others: 1e-3
+weight-decay = 1e-5
 
 # device profile
 use-battery = false

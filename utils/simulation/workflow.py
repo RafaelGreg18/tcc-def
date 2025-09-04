@@ -115,9 +115,11 @@ def get_eval_fn(context: Context, test_loader: DataLoader):
 def get_on_fit_config_fn(context: Context):
     epochs = int(context.run_config["epochs"])
     learning_rate = float(context.run_config["learning-rate"])
+    weight_decay = float(context.run_config["weight-decay"])
 
     def on_fit_config(server_round: int) -> Dict[str, Any]:
-        return {"server_round": server_round, "epochs": epochs, "learning_rate": learning_rate}
+        return {"server_round": server_round, "epochs": epochs, "learning_rate": learning_rate,
+                "weight_decay": weight_decay}
 
     return on_fit_config
 
