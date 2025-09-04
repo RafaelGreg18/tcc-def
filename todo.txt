@@ -11,3 +11,4 @@ faz nada e apenas serve para responder os valores ao servidor, e rodada 2 é enc
 7 - Adicionar twophasefedavg (ok)
 8 - Modificar base para manter modelo global da rodada e atualizar após o aggregate_fit
 9 - Criar nova estratégia que calcula a coerência local a partir da diferença de pesos entre locais atualizados e global
+10 - Implementar o cálculo de EoS

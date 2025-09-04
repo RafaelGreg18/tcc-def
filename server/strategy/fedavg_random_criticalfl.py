@@ -2,18 +2,30 @@ import datetime
 import json
 import os
 from logging import WARNING
-from typing import Optional
+from typing import Optional, List
 
+import numpy as np
+import torch
 from flwr.common import Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log
 from flwr.server.strategy.aggregate import aggregate
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
+from utils.model.manipulation import ModelPersistence, set_weights
 from utils.strategy.critical_point import RollingSlope
 
 
 class FedAvgRandomCriticalFL(FedAvgRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        #fedlaw - local_coherence
+        self.last_parameters = None
+        self.c_cohort = 0
+
+        #eoss - edge of stochastic stability
+        self.bs = 0
+        self.r = 0
+
         # paper
         # self.prev_fgn_paper = None
         self.last_fgn_paper = 0
@@ -40,6 +52,8 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
         self.model_performance_path = os.path.join(output_dir, "model_performance.json")
         self.system_performance_path = os.path.join(output_dir, "system_performance.json")
         self.fl_cli_state_path = os.path.join(output_dir, "client_state.json")
+
+        self.last_parameters = parameters_to_ndarrays(self.initial_parameters)
 
     def _do_aggregate_fit(self, server_round, results, failures) -> tuple[Optional[Parameters], dict[str, Scalar]]:
         """Aggregate fit results using weighted average."""
@@ -74,6 +88,32 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
 
         # self.update_cp()
 
+        if server_round >= 2:
+            #fedlaw local coherence
+            gi = []
+            num_examples = []
+            for _, fitres in results:
+                wi = parameters_to_ndarrays(fitres.parameters)
+                gi.append(self._pseudo_grad(self.last_parameters, wi))
+                num_examples.append(fitres.num_examples)
+            self.c_cohort = self._weighted_coherence(gi, num_examples)
+
+            # eoss
+            w_bs, w_r, n = 0.0, 0.0, 0
+            for _, res in results:
+                n += res.num_examples
+                if "bs" in res.metrics:
+                    w_bs += float(res.metrics["bs"]) * res.num_examples
+                if "r" in res.metrics:
+                    w_r += float(res.metrics["r"]) * res.num_examples
+            if n > 0:
+                bs_avg = w_bs / n
+                r_avg = w_r / n
+                self.bs = bs_avg
+                self.r = r_avg
+
+        self.last_parameters = aggregated_ndarrays
+
         return parameters_aggregated, metrics_aggregated
 
     def evaluate(
@@ -89,7 +129,8 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
             return None
         loss, metrics = eval_res
 
-        my_results = {"cen_loss": loss, "fgn_paper": self.last_fgn_paper, "fgn_github": self.last_fgn_github, **metrics}
+        my_results = {"cen_loss": loss, "fgn_paper": self.last_fgn_paper, "fgn_github": self.last_fgn_github,
+                      "local_coherence": self.c_cohort, "bs_avg": self.bs, "r_avg": self.r, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
@@ -103,3 +144,50 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
     # def update_cp(self):
     #     if (self.prev_fgn_paper is not None) and (self.last_fgn_paper is not None) and (self.prev_fgn_paper > 0):
     #         self.last_delta_paper = (self.last_fgn_paper - self.prev_fgn_paper) / self.prev_fgn_paper
+
+    def _flat_params_to_vec(self, params: List[np.ndarray]) -> np.ndarray:
+        # Converte lista de ndarrays (cada camada) em vetor 1D
+        return np.concatenate([p.ravel() for p in params])
+
+    def _pseudo_grad(self, global_params: List[np.ndarray], client_params: List[np.ndarray]) -> np.ndarray:
+        # g_i = w_g - w_i
+        return self._flat_params_to_vec([g - c for g, c in zip(global_params, client_params)])
+
+    def _weighted_coherence(self, gi: List[np.ndarray], lam: List[int]) -> float:
+        """
+        gi: lista com g_i (vetores 1D) para os m clientes selecionados
+        lam: vetor de pesos de agregação (não-negativos) normalizados com soma 1, shape (m,)
+        Implementa c_cohort^t = (1/m) * sum_{i!=j} lam_i lam_j cos(g_i, g_j)
+        """
+        # G = np.stack(gi, axis=0)  # [m, d]
+        # norms = np.linalg.norm(G, axis=1, keepdims=True)  # [m, 1]
+        # norms = np.maximum(norms, 1e-12)
+        # Gnorm = G / norms  # normaliza linhas
+        # # Matriz de cossenos (produto interno entre linhas normalizadas)
+        # C = Gnorm @ Gnorm.T  # [m, m], diag = 1
+        # np.fill_diagonal(C, 0.0)  # excluir i==j
+        # # Pesos λ_i λ_j como produto externo
+        # W = np.outer(lam, lam)  # [m, m]
+        # np.fill_diagonal(W, 0.0)
+        # m = G.shape[0]
+        # return float((C * W).sum() / max(m, 1))
+        total_samples = sum(lam)
+        # cos = torch.nn.CosineSimilarity(dim=0)
+        sum_coherence = 0.0
+
+        for idx_i, g_i in enumerate(gi):
+            for idx_j, g_j in enumerate(gi):
+                if idx_i != idx_j:
+                    lambda_i = lam[idx_i]/total_samples
+                    lambda_j = lam[idx_j]/total_samples
+                    cossim = self.calculate_cosine_similarity(g_i,g_j)
+
+                    sum_coherence += (lambda_i*lambda_j*cossim)
+
+        return sum_coherence/len(gi)
+
+    def calculate_cosine_similarity(self, vec1, vec2):
+        dot_product = np.dot(vec1, vec2)
+        magnitude1 = np.linalg.norm(vec1)
+        magnitude2 = np.linalg.norm(vec2)
+        return (dot_product / (magnitude1 * magnitude2)).item()

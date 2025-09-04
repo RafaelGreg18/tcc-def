@@ -74,6 +74,7 @@ class BaseStrategy(Strategy):
 
         initial_parameters = self.initial_parameters
         self.initial_parameters = None  # Don't keep initial parameters in memory
+
         return initial_parameters
 
     def evaluate(
