@@ -116,10 +116,11 @@ def get_on_fit_config_fn(context: Context):
     epochs = int(context.run_config["epochs"])
     learning_rate = float(context.run_config["learning-rate"])
     weight_decay = float(context.run_config["weight-decay"])
+    participants_name = context.run_config["participants-name"]
 
     def on_fit_config(server_round: int) -> Dict[str, Any]:
         return {"server_round": server_round, "epochs": epochs, "learning_rate": learning_rate,
-                "weight_decay": weight_decay}
+                "weight_decay": weight_decay, "participants_name": participants_name}
 
     return on_fit_config
 

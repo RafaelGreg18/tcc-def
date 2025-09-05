@@ -37,6 +37,7 @@ class BaseClient(NumPyClient):
             epochs = int(config["epochs"])
             learning_rate = float(config["learning_rate"])
             weight_decay = float(config["weight_decay"])
+            participants_name = config["participants_name"]
 
             criterion = torch.nn.CrossEntropyLoss(reduction='none')
             optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -44,14 +45,18 @@ class BaseClient(NumPyClient):
 
             avg_loss, avg_acc, stat_util, grad_norm = train(self.model, self.dataloader, epochs,
                                                             criterion, optimizer, device, self.dataset_id,
-                                                            learning_rate)
+                                                            learning_rate, participants_name)
 
             # Métricas EoSS (Batch Sharpness e r = eta*BS/2)
-            bs_criterion = torch.nn.CrossEntropyLoss(reduction='mean')
-            BS = self.batch_sharpness_directional(
-                self.model, bs_criterion, self.dataloader, device, self.B_sharp, self.h
-            )
-            r_idx = 0.5 * learning_rate * BS
+            if participants_name == "criticalfl":
+                bs_criterion = torch.nn.CrossEntropyLoss(reduction='mean')
+                BS = self.batch_sharpness_directional(
+                    self.model, bs_criterion, self.dataloader, device, self.B_sharp, self.h
+                )
+                r_idx = 0.5 * learning_rate * BS
+            else:
+                BS = 0
+                r_idx = 0
 
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                                            "loss": avg_loss, "acc": avg_acc,

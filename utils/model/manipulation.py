@@ -20,7 +20,7 @@ class ModelPersistence:
         return model
 
 
-def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, learning_rate):
+def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, learning_rate, participants_name):
     model.to(device)
     model.train()
     squared_sum = num_samples = 0
@@ -31,11 +31,12 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, l
     GNorm = []
 
     # --- NOVO: mapa param -> weight_decay do seu optimizer (respeita param_groups) ---
-    wd_of = {}
-    for group in optimizer.param_groups:
-        wd = float(group.get("weight_decay", 0.0) or 0.0)
-        for p in group["params"]:
-            wd_of[p] = wd
+    if participants_name == "criticalfl":
+        wd_of = {}
+        for group in optimizer.param_groups:
+            wd = float(group.get("weight_decay", 0.0) or 0.0)
+            for p in group["params"]:
+                wd_of[p] = wd
     # -------------------------------------------------------------------------------
 
     for epoch in range(1, epochs + 1):
@@ -82,17 +83,18 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id, l
             # else:
             #     epoch_grad_norm = epoch_grad_norm + temp_norm
             # --------- ALTERADO: usa gradiente efetivo g + λ·w ao acumular a norma ----------
-            temp_norm_sq = 0.0
-            for p in model.parameters():
-                if p.grad is None:
-                    continue
-                g = p.grad.detach()
-                wd = wd_of.get(p, 0.0)
-                # gradiente efetivo (pré-LR): soma do gradiente com o termo de decaimento
-                g_eff = g if wd == 0.0 else (g + wd * p.detach())
-                n = g_eff.norm(2).item()
-                temp_norm_sq += n * n
-            epoch_grad_norm += temp_norm_sq
+            if participants_name == "criticalfl":
+                temp_norm_sq = 0.0
+                for p in model.parameters():
+                    if p.grad is None:
+                        continue
+                    g = p.grad.detach()
+                    wd = wd_of.get(p, 0.0)
+                    # gradiente efetivo (pré-LR): soma do gradiente com o termo de decaimento
+                    g_eff = g if wd == 0.0 else (g + wd * p.detach())
+                    n = g_eff.norm(2).item()
+                    temp_norm_sq += n * n
+                epoch_grad_norm += temp_norm_sq
             # -------------------------------------------------------------------------------
 
         GNorm.append(epoch_grad_norm)
