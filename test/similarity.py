@@ -16,6 +16,7 @@ import flwr as fl
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.utils as U
 from flwr.client import NumPyClient, Client
 from flwr.common import (
@@ -35,31 +36,6 @@ from torch.utils.data import DataLoader
 from torchvision.models import ShuffleNet_V2_X0_5_Weights, shufflenet_v2_x0_5
 from torchvision.transforms import Compose, Normalize, ToTensor, InterpolationMode, Resize, CenterCrop, \
     RandomHorizontalFlip
-
-
-# -------------------------
-# Modelo: CNN (encoder/decoder)
-# -------------------------
-class SimpleCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.encoder = nn.Sequential(
-            nn.Conv2d(3, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
-        )
-        self.flatten = nn.Flatten()
-        self.decoder = nn.Sequential(
-            nn.Linear(64 * 8 * 8, 128), nn.ReLU(inplace=True),
-            nn.Linear(128, 10),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.encoder(x)
-        x = self.flatten(x)
-        logits = self.decoder(x)
-        return logits  # "ativações de classificação" (sem softmax)
 
 
 # -------------------------
@@ -273,18 +249,25 @@ def pairwise_cosine_matrix(vecs: List[torch.Tensor]) -> torch.Tensor:
 
 
 @torch.no_grad()
-def collect_decoder_logits(model: nn.Module, loader: DataLoader, device: torch.device,
-                           max_batches: int = 8) -> torch.Tensor:
-    model.to(device)
-    model.eval()
+def collect_penultimate_feats(model, loader, device, max_batches=8):
+    model.to(device).eval()
     feats = []
+
+    penult = {}
+
+    def hook_conv5(module, inp, out):
+        # out: [N, C, H, W] -> GAP -> [N, C]
+        penult['feat'] = torch.flatten(F.adaptive_avg_pool2d(out, (1, 1)), 1).detach().cpu()
+
+    h = model.conv5.register_forward_hook(hook_conv5)
     for b_idx, batch in enumerate(loader):
         if b_idx >= max_batches:
             break
         x = batch["img"].to(device)
-        logits = model(x)
-        feats.append(logits.detach().cpu())
-    return torch.cat(feats, dim=0)
+        _ = model(x)  # dispara o hook
+        feats.append(penult['feat'])  # [N, C]
+    h.remove()
+    return torch.cat(feats, dim=0)  # matriz X para CKA
 
 
 def linear_cka(X: torch.Tensor, Y: torch.Tensor) -> float:
@@ -402,8 +385,8 @@ class FedAvgWithSimilarity(FedAvg):
         for nd in client_params_list:
             m = self.model_fn()
             set_weights(m, nd)
-            feats = collect_decoder_logits(m, self.probe_loader, self.server_device,
-                                           self.sim_options.max_probe_batches)
+            feats = collect_penultimate_feats(m, self.probe_loader, self.server_device,
+                                              self.sim_options.max_probe_batches)
             feats_list.append(feats)
         cka_mat = pairwise_cka(feats_list)
 
