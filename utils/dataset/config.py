@@ -8,16 +8,16 @@ class DatasetConfig:
     TRANSFORMS = {
         "uoft-cs/cifar10": (
             Compose([
-                Resize(256, interpolation=InterpolationMode.BILINEAR),
-                CenterCrop(224),
+                # Resize(256, interpolation=InterpolationMode.BILINEAR),
+                # CenterCrop(224),
                 RandomHorizontalFlip(),
                 ToTensor(),
                 Normalize(mean=[0.4914, 0.4822, 0.4465],
                           std=[0.2470, 0.2435, 0.2616])
             ]),
             Compose([
-                Resize(256, interpolation=InterpolationMode.BILINEAR),
-                CenterCrop(224),
+                # Resize(256, interpolation=InterpolationMode.BILINEAR),
+                # CenterCrop(224),
                 ToTensor(),
                 Normalize(mean=[0.4914, 0.4822, 0.4465],
                           std=[0.2470, 0.2435, 0.2616])

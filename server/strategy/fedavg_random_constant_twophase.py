@@ -14,10 +14,11 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         super().__init__(*args, **kwargs)
         self.num_participants_bcp = self.context.run_config["num-participants-bcp"]
         self.num_participants_acp = self.context.run_config["num-participants-acp"]
-        self.smooth_window = self.context.run_config["smooth-window"]
-        self.tau_deriv = self.context.run_config["tau-deriv"]
-        self._acc_hist = []
-        self._deriv_abs_hist = []
+        self.max_rounds = self.context.run_config["num-rounds"]
+        # self.smooth_window = self.context.run_config["smooth-window"]
+        # self.tau_deriv = self.context.run_config["tau-deriv"]
+        # self._acc_hist = []
+        # self._deriv_abs_hist = []
         self.is_cp = True
 
     def _do_initialization(self, client_manager):
@@ -64,8 +65,8 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         loss, metrics = eval_res
 
         my_results = {"cen_loss": loss, **metrics}
-        self.update_cp(server_round, my_results["cen_accuracy"])
-        my_results["is_cp"] = self.is_cp
+        # self.update_cp(server_round, my_results["cen_accuracy"])
+        # my_results["is_cp"] = self.is_cp
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
@@ -77,25 +78,27 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         return loss, metrics
 
     def update_cp(self, server_round: int, accuracy: float) -> int:
-        if server_round > 1:
-            self._push_accuracy(accuracy)
-            to_update_cp, mu_r = self._smoothed_abs_deriv()
+        if server_round > self.max_rounds//2:
+            self.is_cp = False
+    #     if server_round > 1:
+    #         self._push_accuracy(accuracy)
+    #         to_update_cp, mu_r = self._smoothed_abs_deriv()
+    #
+    #         if to_update_cp and mu_r <= self.tau_deriv:
+    #             self.is_cp = False
 
-            if to_update_cp and mu_r <= self.tau_deriv:
-                self.is_cp = False
+    # def _push_accuracy(self, acc: float) -> None:
+    #     if self._acc_hist:
+    #         deriv = acc - self._acc_hist[-1]
+    #         self._deriv_abs_hist.append(abs(deriv))
+    #     self._acc_hist.append(acc)
+    #
+    #     # Mantém somente o necessário para a média móvel
+    #     v = max(1, self.smooth_window)
+    #     if len(self._deriv_abs_hist) > v:
+    #         self._deriv_abs_hist = self._deriv_abs_hist[-v:]
 
-    def _push_accuracy(self, acc: float) -> None:
-        if self._acc_hist:
-            deriv = acc - self._acc_hist[-1]
-            self._deriv_abs_hist.append(abs(deriv))
-        self._acc_hist.append(acc)
-
-        # Mantém somente o necessário para a média móvel
-        v = max(1, self.smooth_window)
-        if len(self._deriv_abs_hist) > v:
-            self._deriv_abs_hist = self._deriv_abs_hist[-v:]
-
-    def _smoothed_abs_deriv(self) -> tuple[bool,float]:
-        if not self._deriv_abs_hist or len(self._deriv_abs_hist) < self.smooth_window:
-            return False, 0.0
-        return True, sum(self._deriv_abs_hist) / len(self._deriv_abs_hist)
+    # def _smoothed_abs_deriv(self) -> tuple[bool,float]:
+    #     if not self._deriv_abs_hist or len(self._deriv_abs_hist) < self.smooth_window:
+    #         return False, 0.0
+    #     return True, sum(self._deriv_abs_hist) / len(self._deriv_abs_hist)
