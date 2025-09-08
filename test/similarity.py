@@ -248,10 +248,19 @@ def mean_cosine_similarity(cosine_matrix):
     return mean_cosine.item()  # Retorna como número normal
 
 def mean_cka(cka_matrix):
+    if isinstance(cka_matrix, np.ndarray):
+        cka_matrix = torch.tensor(cka_matrix)
+
+    # Verifica se o tensor está no dispositivo correto (CPU ou GPU)
+    if cka_matrix.device != torch.device('cpu'):
+        cka_matrix = cka_matrix.cpu()
+
     # Obtém os índices da parte superior da matriz (sem a diagonal)
     triu_indices = np.triu_indices_from(cka_matrix, k=1)
+
     # Calcula a média dos valores fora da diagonal
-    mean_cka = np.mean(cka_matrix[triu_indices])
+    mean_cka = torch.mean(cka_matrix[triu_indices])
+
     return mean_cka.item()
 
 def is_finite_ndarrays(ndarrays) -> bool:
