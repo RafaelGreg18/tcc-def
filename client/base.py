@@ -36,8 +36,8 @@ class BaseClient(NumPyClient):
             optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-            avg_loss, avg_acc, stat_util, avg_sharpness = train(self.model, self.dataloader, epochs,
-                                                                criterion, optimizer, device, self.dataset_id)
+            avg_loss, avg_acc, stat_util, avg_sharpness = train(self.model, self.dataloader, epochs, criterion,
+                                                                optimizer, device, self.dataset_id)
 
             r_idx = 0.5 * learning_rate * avg_sharpness
 
