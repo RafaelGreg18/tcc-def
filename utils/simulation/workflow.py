@@ -138,12 +138,9 @@ def get_fit_metrics_aggregation_fn():
         accuracies = [num_examples * m["acc"] for num_examples, m in metrics]
         losses = [num_examples * m["loss"] for num_examples, m in metrics]
         examples = [num_examples for num_examples, _ in metrics]
-        fgn_paper = [num_examples * m["grad_norm"] for num_examples, m in metrics]
-        fgn_github = [m["grad_norm"] for num_examples, m in metrics]
 
         # Aggregate and return custom metric (weighted average)
-        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples),
-                "fgn_paper": sum(fgn_paper) / sum(examples), "fgn_github": sum(fgn_github) / len(fgn_github)}
+        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples)}
 
     return handle_fit_metrics
 
