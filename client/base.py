@@ -20,9 +20,7 @@ class BaseClient(NumPyClient):
         if int(config["server_round"]) == 1:
             set_weights(self.model, parameters)
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
-                                                                           "loss": 0, "acc": 0, "stat_util": 0,
-                                                                           "fgn": 0,
-                                                                           "bs": 0, "r": 0}  # eoss
+                                                                           "loss": 0, "acc": 0, "stat_util": 0}  # eoss
         else:
             # update model weights
             set_weights(self.model, parameters)
@@ -36,15 +34,12 @@ class BaseClient(NumPyClient):
             optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-            avg_loss, avg_acc, stat_util, avg_sharpness = train(self.model, self.dataloader, epochs, criterion,
+            avg_loss, avg_acc, stat_util = train(self.model, self.dataloader, epochs, criterion,
                                                                 optimizer, device, self.dataset_id)
-
-            r_idx = 0.5 * learning_rate * avg_sharpness
 
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                                            "loss": avg_loss, "acc": avg_acc,
-                                                                           "stat_util": stat_util,
-                                                                           'bs': avg_sharpness, "r": r_idx}  # test eoss
+                                                                           "stat_util": stat_util}  # test eoss
 
     def evaluate(self, parameters, config):
         if int(config["server_round"]) > 1:
