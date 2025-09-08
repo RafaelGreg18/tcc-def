@@ -48,6 +48,8 @@ def build_model(num_classes: int = 10, pretrained: bool = False) -> nn.Module:
     model.fc = nn.Linear(in_feats, num_classes)
     return model
 
+def head_key_filter(k: str) -> bool:
+    return k.startswith("fc.") or k.startswith("decoder.")
 
 # -------------------------
 # Utilitários de pesos
@@ -237,6 +239,20 @@ def sanitize_tensor(t: torch.Tensor) -> torch.Tensor:
 def flatten_params(params: NDArrays) -> torch.Tensor:
     return torch.cat([torch.from_numpy(p.ravel()) for p in params]).float()
 
+def flatten_head_only(params_ndarrays, state_keys, key_filter=head_key_filter) -> torch.Tensor:
+    parts = []
+    for arr, k in zip(params_ndarrays, state_keys):
+        if key_filter(k):
+            t = torch.from_numpy(arr).reshape(-1).float()
+            t = torch.nan_to_num(t, nan=0.0, posinf=0.0, neginf=0.0)  # robustez
+            parts.append(t)
+    if not parts:
+        return torch.zeros(1)
+    v = torch.cat(parts)
+    # evita divisão por zero depois
+    if not torch.isfinite(v).all() or v.norm() == 0:
+        v = torch.nan_to_num(v, nan=0.0, posinf=0.0, neginf=0.0)
+    return v
 
 def pairwise_cosine_matrix(vecs: List[torch.Tensor]) -> torch.Tensor:
     # stack, sanitiza e normaliza com eps
@@ -324,6 +340,8 @@ class FedAvgWithSimilarity(FedAvg):
         self._last_broadcast_nd: Optional[NDArrays] = None
         self._last_similarity_metrics: Dict[str, float] = {}
         self.server_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self._state_keys = list(self.model_fn().state_dict().keys())
+        #
 
         os.makedirs(self.sim_options.csv_dir, exist_ok=True)
         self.metrics_csv_path = os.path.join(self.sim_options.csv_dir, "round_metrics.csv")
@@ -371,15 +389,35 @@ class FedAvgWithSimilarity(FedAvg):
             return params_agg, metrics
 
         # --- A partir daqui use 'valid' para construir deltas e métricas
-        base = flatten_params(self._last_broadcast_nd)
-        deltas, client_params_list = [], []
-        for client, fit_res in valid:
-            nd = parameters_to_ndarrays(fit_res.parameters)
-            client_params_list.append(nd)
-            vec = flatten_params(nd) - base
-            deltas.append(vec)
+        # base = flatten_params(self._last_broadcast_nd)
+        # deltas, client_params_list = [], []
+        # for client, fit_res in valid:
+        #     nd = parameters_to_ndarrays(fit_res.parameters)
+        #     client_params_list.append(nd)
+        #     vec = flatten_params(nd) - base
+        #     deltas.append(vec)
+        #
+        # cos_mat = pairwise_cosine_matrix(deltas)
 
-        cos_mat = pairwise_cosine_matrix(deltas)
+        # --- Depois (somente classificador/head) ---
+        client_params_list = []
+        deltas_head = []
+
+        # vetor "base" só da head do modelo global que foi broadcast
+        base_head = flatten_head_only(self._last_broadcast_nd, self._state_keys)
+
+        for client, fit_res in valid:  # 'valid' = lista filtrada de resultados
+            nd = parameters_to_ndarrays(fit_res.parameters)  # Flower API
+            client_params_list.append(nd)
+
+            vec_head = flatten_head_only(nd, self._state_keys) - base_head
+            # estabiliza: evita norma zero/NaN que podem contaminar toda a matriz
+            if not torch.isfinite(vec_head).all() or vec_head.norm() == 0:
+                vec_head = torch.nan_to_num(vec_head, nan=0.0, posinf=0.0, neginf=0.0)
+
+            deltas_head.append(vec_head)
+
+        cos_head_mat = pairwise_cosine_matrix(deltas_head)
 
         feats_list = []
         for nd in client_params_list:
@@ -391,14 +429,14 @@ class FedAvgWithSimilarity(FedAvg):
         cka_mat = pairwise_cka(feats_list)
 
         if self.sim_options.log_to_stdout:
-            print(f"\n[Round {server_round}] Pairwise cosine (updates):\n{cos_mat.cpu().numpy()}\n")
+            print(f"\n[Round {server_round}] Pairwise cosine (updates):\n{cos_head_mat.cpu().numpy()}\n")
             print(f"[Round {server_round}] Pairwise CKA (decoder logits):\n{cka_mat.cpu().numpy()}\n")
 
         # Métricas agregadas (mantém para uso na avaliação centralizada)
         self._last_similarity_metrics = {
-            "cos_mean": float(cos_mat.mean().item()),
-            "cos_min": float(cos_mat.min().item()),
-            "cos_max": float(cos_mat.max().item()),
+            "cos_mean": float(cos_head_mat.mean().item()),
+            "cos_min": float(cos_head_mat.min().item()),
+            "cos_max": float(cos_head_mat.max().item()),
             "cka_mean": float(cka_mat.mean().item()),
             "cka_min": float(cka_mat.min().item()),
             "cka_max": float(cka_mat.max().item()),
@@ -406,7 +444,7 @@ class FedAvgWithSimilarity(FedAvg):
 
         # Salva matrizes por rodada (CSV separados)
         np.savetxt(os.path.join(self.sim_options.csv_dir, f"cosine_round_{server_round:03d}.csv"),
-                   cos_mat.cpu().numpy(), delimiter=",")
+                   cos_head_mat.cpu().numpy(), delimiter=",")
         np.savetxt(os.path.join(self.sim_options.csv_dir, f"cka_round_{server_round:03d}.csv"),
                    cka_mat.cpu().numpy(), delimiter=",")
 
