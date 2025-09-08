@@ -223,12 +223,29 @@ def client_fn(context: Context) -> Client:
 # -------------------------
 # Similaridade (Cosine e CKA)
 # -------------------------
+# def mean_cosine_similarity(cosine_matrix):
+#     # Obtém os índices da parte superior da matriz (sem a diagonal)
+#     triu_indices = np.triu_indices_from(cosine_matrix, k=1)
+#     # Calcula a média dos valores fora da diagonal
+#     mean_cosine = np.mean(cosine_matrix[triu_indices])
+#     return mean_cosine.item()
+
 def mean_cosine_similarity(cosine_matrix):
+    # Converte a matriz para tensor, se necessário
+    if isinstance(cosine_matrix, np.ndarray):
+        cosine_matrix = torch.tensor(cosine_matrix)
+
+    # Verifica se o tensor está no dispositivo correto (CPU ou GPU)
+    if cosine_matrix.device != torch.device('cpu'):
+        cosine_matrix = cosine_matrix.cpu()
+
     # Obtém os índices da parte superior da matriz (sem a diagonal)
     triu_indices = np.triu_indices_from(cosine_matrix, k=1)
+
     # Calcula a média dos valores fora da diagonal
-    mean_cosine = np.mean(cosine_matrix[triu_indices])
-    return mean_cosine.item()
+    mean_cosine = torch.mean(cosine_matrix[triu_indices])
+
+    return mean_cosine.item()  # Retorna como número normal
 
 def mean_cka(cka_matrix):
     # Obtém os índices da parte superior da matriz (sem a diagonal)
