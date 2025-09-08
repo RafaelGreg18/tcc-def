@@ -223,6 +223,20 @@ def client_fn(context: Context) -> Client:
 # -------------------------
 # Similaridade (Cosine e CKA)
 # -------------------------
+def mean_cosine_similarity(cosine_matrix):
+    # Obtém os índices da parte superior da matriz (sem a diagonal)
+    triu_indices = np.triu_indices_from(cosine_matrix, k=1)
+    # Calcula a média dos valores fora da diagonal
+    mean_cosine = np.mean(cosine_matrix[triu_indices])
+    return mean_cosine.item()
+
+def mean_cka(cka_matrix):
+    # Obtém os índices da parte superior da matriz (sem a diagonal)
+    triu_indices = np.triu_indices_from(cka_matrix, k=1)
+    # Calcula a média dos valores fora da diagonal
+    mean_cka = np.mean(cka_matrix[triu_indices])
+    return mean_cka.item()
+
 def is_finite_ndarrays(ndarrays) -> bool:
     # True se TODOS os tensores tiverem apenas valores finitos
     for a in ndarrays:
@@ -434,10 +448,10 @@ class FedAvgWithSimilarity(FedAvg):
 
         # Métricas agregadas (mantém para uso na avaliação centralizada)
         self._last_similarity_metrics = {
-            "cos_mean": float(cos_head_mat.mean().item()),
+            "cos_mean": float(mean_cosine_similarity(cos_head_mat)),
             "cos_min": float(cos_head_mat.min().item()),
             "cos_max": float(cos_head_mat.max().item()),
-            "cka_mean": float(cka_mat.mean().item()),
+            "cka_mean": float(mean_cka(cka_mat)),
             "cka_min": float(cka_mat.min().item()),
             "cka_max": float(cka_mat.max().item()),
         }
