@@ -496,7 +496,7 @@ class FedAvgWithSimilarity(FedAvg):
 # ServerApp
 # -------------------------
 def server_fn(context: Context) -> ServerAppComponents:
-    num_rounds = context.run_config.get("num-server-rounds", 30)
+    num_rounds = context.run_config.get("num-server-rounds", 200)
     fraction_fit = context.run_config.get("fraction-fit", 0.1)
 
     init_nd = get_weights(build_model())
