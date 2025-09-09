@@ -107,23 +107,17 @@ def apply_transforms(batch, tfm):
 
 def load_fds_partition(partition_id: int, num_partitions: int, batch_size: int = 16):
     partitioner = DirichletPartitioner(
-        num_partitions=num_partitions, alpha=0.1, partition_by="label", min_partition_size=2, self_balancing=True
+        num_partitions=num_partitions, alpha=1.0, partition_by="label", min_partition_size=2, self_balancing=True
     )
     fds = FederatedDataset(
         dataset="uoft-cs/cifar10",
         partitioners={"train": partitioner},
     )
-    part = fds.load_partition(partition_id)
-    part_tt = part.train_test_split(test_size=0.2, seed=42)
-
     tfm_train = build_train_transforms()
-    tfm_test = build_test_transforms()
-    ds_train = part_tt["train"].with_transform(lambda b: apply_transforms(b, tfm_train))
-    ds_val = part_tt["test"].with_transform(lambda b: apply_transforms(b, tfm_test))
-
+    ds_train = fds.load_partition(partition_id).with_transform(lambda b: apply_transforms(b, tfm_train))
     trainloader = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
-    valloader = DataLoader(ds_val, batch_size=batch_size, shuffle=False)
-    return trainloader, valloader
+
+    return trainloader
 
 
 def load_probe_loader(batch_size: int = 16) -> DataLoader:
@@ -187,10 +181,9 @@ def evaluate_model(net: nn.Module, loader: DataLoader, device: torch.device) -> 
 # Cliente Flower
 # -------------------------
 class FlowerClient(NumPyClient):
-    def __init__(self, net: nn.Module, trainloader: DataLoader, valloader: DataLoader, local_epochs: int = 1):
+    def __init__(self, net: nn.Module, trainloader: DataLoader, local_epochs: int = 1):
         self.net = net
         self.trainloader = trainloader
-        self.valloader = valloader
         self.local_epochs = local_epochs
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net.to(self.device)
@@ -207,17 +200,17 @@ class FlowerClient(NumPyClient):
     # mas deixamos implementado.
     def evaluate(self, parameters, config):
         set_weights(self.net, parameters)
-        loss, acc = evaluate_model(self.net, self.valloader, self.device)
-        return float(loss), len(self.valloader.dataset), {"val_accuracy": float(acc)}
+        loss, acc = evaluate_model(self.net, self.trainloader, self.device)
+        return float(loss), len(self.trainloader.dataset), {"val_accuracy": float(acc)}
 
 
 def client_fn(context: Context) -> Client:
     part_id = context.node_config["partition-id"]
     num_parts = context.node_config["num-partitions"]
     local_epochs = context.run_config.get("local-epochs", 10)
-    trainloader, valloader = load_fds_partition(part_id, num_parts)
+    trainloader = load_fds_partition(part_id, num_parts)
     net = build_model()
-    return FlowerClient(net, trainloader, valloader, local_epochs).to_client()
+    return FlowerClient(net, trainloader, local_epochs).to_client()
 
 
 # -------------------------
