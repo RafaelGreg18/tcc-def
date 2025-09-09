@@ -10,10 +10,9 @@ import csv
 import os
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List, Union
 
 import flwr as fl
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.utils as U
@@ -24,9 +23,10 @@ from flwr.common import (
     Parameters,
     Scalar,
     ndarrays_to_parameters,
-    parameters_to_ndarrays,
+    parameters_to_ndarrays, Metrics, FitRes,
 )
 from flwr.server import ServerApp, ServerAppComponents
+from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 from flwr.simulation import run_simulation
 from flwr_datasets import FederatedDataset
@@ -36,6 +36,9 @@ from torchvision.models import AlexNet_Weights, alexnet
 from torchvision.transforms import Compose, Normalize, ToTensor, InterpolationMode, Resize, CenterCrop, \
     RandomHorizontalFlip
 
+from Comp_FIM.object import PMatKFAC, PMatEKFAC, PMatDiag, PMatDense
+from Comp_FIM.metrics import FIM, FIM_MonteCarlo
+from Comp_FIM.object.vector import random_pvector, PVector
 
 # -------------------------
 # Modelo: AlexNet com cabeça 10 classes
@@ -181,7 +184,8 @@ class FlowerClient(NumPyClient):
     def fit(self, parameters, config):
         set_weights(self.net, parameters)
         avg_loss = train_one_round(self.net, self.trainloader, self.local_epochs, self.device)
-        return get_weights(self.net), len(self.trainloader.dataset), {"train_loss": avg_loss}
+        trace = self.fim()
+        return get_weights(self.net), len(self.trainloader.dataset), {"train_loss": avg_loss, "tr": trace}
 
     # Avaliação federada em clientes será desativada (fraction_evaluate=0.0),
     # mas deixamos implementado.
@@ -189,6 +193,32 @@ class FlowerClient(NumPyClient):
         set_weights(self.net, parameters)
         loss, acc = evaluate_model(self.net, self.trainloader, self.device)
         return float(loss), len(self.trainloader.dataset), {"val_accuracy": float(acc)}
+
+    def fim(self):
+        self.net.eval()
+        Ts = []
+        K = 10000
+        for i, (x, y) in enumerate(self.trainloader):
+            x, y = list(x.cpu().detach().numpy()), list(y.cpu().detach().numpy())
+            for j in range(len(x)):
+                Ts.append([x[j], y[j]])
+            if len(Ts) >= K:
+                break
+
+        TLoader = torch.utils.data.DataLoader(dataset=Ts, batch_size=16, shuffle=False)
+
+        F_Diag = FIM(
+            model=self.net,
+            loader=TLoader,
+            representation=PMatDiag,
+            n_output=10,
+            variant="classif_logits",
+            device="cuda"
+        )
+
+        Tr = F_Diag.trace().item()
+
+        return Tr
 
 
 def client_fn(context: Context) -> Client:
@@ -209,6 +239,14 @@ class SimilarityOptions:
     log_to_stdout: bool = True
     csv_dir: str = "metrics"  # onde salvar CSVs
 
+def handle_fit_metrics(metrics: List[Tuple[int, Metrics]]) -> Metrics:
+    # Multiply accuracy of each client by number of examples used
+    losses = [num_examples * m["train_loss"] for num_examples, m in metrics]
+    traces = [num_examples * m["tr"] for num_examples, m in metrics]
+    examples = [num_examples for num_examples, _ in metrics]
+
+    # Aggregate and return custom metric (weighted average)
+    return {"avg_loss": sum(losses) / sum(examples), "avg_trace": sum(traces) / sum(examples)}
 
 class FedAvgWithFedFim(FedAvg):
     def __init__(
@@ -223,6 +261,7 @@ class FedAvgWithFedFim(FedAvg):
         self.probe_loader = probe_loader
         self.central_eval_loader = central_eval_loader
         self.server_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.fedfim = 0.0
 
         os.makedirs("./metrics", exist_ok=True)
         self.metrics_csv_path = os.path.join("./metrics", "round_metrics.csv")
@@ -234,6 +273,17 @@ class FedAvgWithFedFim(FedAvg):
                     "central_loss", "central_accuracy",
                 ])
 
+    def aggregate_fit(
+            self,
+            server_round: int,
+            results: list[tuple[ClientProxy, FitRes]],
+            failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+    ) -> tuple[Optional[Parameters], dict[str, Scalar]]:
+        params_agg, metrics_agg = super().aggregate_fit(server_round, results, failures)
+
+        self.fedfim = metrics_agg["avg_trace"]
+
+        return params_agg, metrics_agg
 
     # Avaliação CENTRALIZADA no servidor (é chamada após aggregate_fit)
     # Assinatura conforme Strategy.evaluate (server-side). :contentReference[oaicite:1]{index=1}
@@ -244,9 +294,8 @@ class FedAvgWithFedFim(FedAvg):
         loss, acc = evaluate_model(model, self.central_eval_loader, self.server_device)
 
         # Registra/concatena ao CSV principal desta rodada
-        fedfim = 0.0
         row = [
-            server_round, fedfim,
+            server_round, self.fedfim,
             float(loss), float(acc),
         ]
         with open(self.metrics_csv_path, "a", newline="") as f:
@@ -274,6 +323,7 @@ def server_fn(context: Context) -> ServerAppComponents:
         probe_loader=probe_loader,
         central_eval_loader=central_eval_loader,
         fraction_fit=fraction_fit,
+        fit_metrics_aggregation_fn=handle_fit_metrics,
         fraction_evaluate=0.0,  # <<< desativa avaliação federada em clientes
         min_available_clients=2,
         initial_parameters=init_params,
