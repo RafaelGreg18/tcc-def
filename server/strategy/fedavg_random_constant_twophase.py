@@ -3,7 +3,8 @@ import json
 import os
 from typing import Optional
 
-from flwr.common import Parameters, Scalar, parameters_to_ndarrays
+from flwr.common import Parameters, Scalar, parameters_to_ndarrays, FitIns
+from flwr.server.client_proxy import ClientProxy
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 from utils.strategy.critical_point import RollingSlope
@@ -51,6 +52,24 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         else:
             return self.num_evaluators, self.num_participants_acp #num_eval > num_part
 
+    # def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
+    #     config = {}
+    #     if self.on_fit_config_fn is not None:
+    #         # Custom fit config function provided
+    #         config = self.on_fit_config_fn(server_round)
+    #     fit_ins = FitIns(parameters, config)
+    #
+    #     # Sample clients
+    #     sample_size, min_num_clients = self.num_fit_clients(
+    #         client_manager.num_available()
+    #     )
+    #     clients = client_manager.sample(
+    #         num_clients=sample_size, min_num_clients=min_num_clients
+    #     )
+    #
+    #     # Return client/config pairs
+    #     return [(client, fit_ins) for client in clients]
+
     def evaluate(
             self, server_round: int, parameters: Parameters
     ) -> Optional[tuple[float, dict[str, Scalar]]]:
@@ -70,6 +89,7 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
+        self.update_cp(server_round)
 
         # Save metrics as json
         with open(self.model_performance_path, "w") as json_file:
@@ -77,7 +97,7 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
 
         return loss, metrics
 
-    def update_cp(self, server_round: int, accuracy: float) -> int:
+    def update_cp(self, server_round: int) -> int:
         if server_round > self.max_rounds//2:
             self.is_cp = False
     #     if server_round > 1:
