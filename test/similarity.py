@@ -105,7 +105,7 @@ def apply_transforms(batch, tfm):
     return batch
 
 
-def load_fds_partition(partition_id: int, num_partitions: int, batch_size: int = 32):
+def load_fds_partition(partition_id: int, num_partitions: int, batch_size: int = 16):
     partitioner = DirichletPartitioner(
         num_partitions=num_partitions, alpha=0.1, partition_by="label", min_partition_size=2, self_balancing=True
     )
@@ -126,7 +126,7 @@ def load_fds_partition(partition_id: int, num_partitions: int, batch_size: int =
     return trainloader, valloader
 
 
-def load_probe_loader(batch_size: int = 64) -> DataLoader:
+def load_probe_loader(batch_size: int = 16) -> DataLoader:
     # Para load_split("test"), FederatedDataset requer 'partitioners'
     fds = FederatedDataset(
         dataset="uoft-cs/cifar10",
@@ -137,7 +137,7 @@ def load_probe_loader(batch_size: int = 64) -> DataLoader:
     return DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 
-def load_central_eval_loader(batch_size: int = 128) -> DataLoader:
+def load_central_eval_loader(batch_size: int = 16) -> DataLoader:
     # Avaliação centralizada (pode ser o mesmo "test" do CIFAR-10)
     return load_probe_loader(batch_size=batch_size)
 
@@ -149,7 +149,7 @@ def train_one_round(net: nn.Module, loader: DataLoader, epochs: int, device: tor
     net.to(device)
     net.train()
     criterion = nn.CrossEntropyLoss().to(device)
-    opt = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.9, weight_decay=0.00001)
+    opt = torch.optim.SGD(net.parameters(), lr=0.01, weight_decay=0.00001)
     total_loss = 0.0
     for _ in range(epochs):
         for batch in loader:
@@ -528,8 +528,8 @@ def server_fn(context: Context) -> ServerAppComponents:
     init_nd = get_weights(build_model())
     init_params = ndarrays_to_parameters(init_nd)
 
-    probe_loader = load_probe_loader(batch_size=32)
-    central_eval_loader = load_central_eval_loader(batch_size=64)
+    probe_loader = load_probe_loader(batch_size=16)
+    central_eval_loader = load_central_eval_loader(batch_size=16)
 
     strategy = FedAvgWithSimilarity(
         model_fn=build_model,
