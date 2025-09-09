@@ -56,6 +56,8 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
             correct_pred += (predicted == y).sum().item()
 
             loss.backward()
+            optimizer.step()
+            total_loss += loss.item() * y.size(0)
 
         if epoch == epochs:
             avg_acc = correct_pred / total_pred

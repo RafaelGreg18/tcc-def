@@ -1,0 +1,10 @@
+Pré-motivacionais:
+
+Motivacionais:
+1 - Experimento 1: model=MobilenetV2; lr=1e-2; weight-decay=1e-5; momentum=0; batch=16; epochs=10
+2 - Experimento 2: falhou em thedeep
+
+Ponto crítico:
+1 - CKA permite encontrar fase crítica. Uma spline com tangente no ponto com inclinação menor que limite é suficiente.
+    - Precisa de dataset externo.
+2 - Similaridade de cosseno na última camada é insuficiente.
