@@ -198,7 +198,10 @@ class FlowerClient(NumPyClient):
         self.net.eval()
         Ts = []
         K = 10000
-        for i, (x, y) in enumerate(self.trainloader):
+        for i, batch in enumerate(self.trainloader):
+            x = batch["img"]
+            y = batch["label"]
+
             x, y = list(x.cpu().detach().numpy()), list(y.cpu().detach().numpy())
             for j in range(len(x)):
                 Ts.append([x[j], y[j]])
