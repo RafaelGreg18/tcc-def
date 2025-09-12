@@ -396,7 +396,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     probe_loader = load_probe_loader(batch_size=16)
     central_eval_loader = load_central_eval_loader(batch_size=16)
 
-    on_fit_config = get_on_fit_config_fn(epochs, learning_rate, weight_decay, decay_step)
+    on_fit_config_fn = get_on_fit_config_fn(epochs, learning_rate, weight_decay, decay_step)
 
     strategy = FedAvgWithFgn(
         model_fn=build_model,
@@ -404,7 +404,7 @@ def server_fn(context: Context) -> ServerAppComponents:
         central_eval_loader=central_eval_loader,
         Window=Window,
         fraction_fit=fraction_fit,
-        on_fit_config=on_fit_config,
+        on_fit_config_fn=on_fit_config_fn,
         fit_metrics_aggregation_fn=handle_fit_metrics,
         fraction_evaluate=0.0,  # <<< desativa avaliação federada em clientes
         min_available_clients=2,
