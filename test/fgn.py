@@ -211,6 +211,8 @@ def train_one_round(net: nn.Module, loader: DataLoader, criterion: nn.Module, op
             else:
                 grad_norm = grad_norm + temp_norm
 
+        GNorm.append(grad_norm)
+
     Lrnow = opt.param_groups[0]['lr']
 
     return total_loss / max(1, len(loader)), np.mean(GNorm) * Lrnow
