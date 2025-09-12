@@ -3,6 +3,7 @@ from abc import abstractmethod
 from logging import ERROR
 from typing import Callable, Optional, Union
 
+import numpy as np
 from flwr.common import Context, Parameters, MetricsAggregationFn, log, Scalar, parameters_to_ndarrays, FitIns, \
     EvaluateIns, FitRes, EvaluateRes
 from flwr.server import ClientManager
@@ -54,6 +55,11 @@ class BaseStrategy(Strategy):
         self.system_metrics_to_save = {}
         self.model_performance_path = None
         self.performance_metrics_to_save = {}
+        # testing fgn
+        self.Norms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.Window = 10
+        self.old_fgn = 0
+        self.new_fgn = 0
 
     def __repr__(self) -> str:
         return self.repr
@@ -90,7 +96,20 @@ class BaseStrategy(Strategy):
             return None
         loss, metrics = eval_res
 
-        my_results = {"cen_loss": loss, **metrics}
+        # testing fgn
+        if server_round % 2 == 0 and server_round > 5:
+            self.old_fgn = max([np.mean(self.Norms[-self.Window - 1:-1]), 0.0000001])
+            self.new_fgn = np.mean(self.Norms[-self.Window:])
+
+            if (self.new_fgn - self.old_fgn) / self.old_fgn >= 0.01:
+                is_cp = True
+            else:
+                is_cp = False
+        else:
+            self.new_fgn = 0
+            is_cp = False
+
+        my_results = {"cen_loss": loss, "fgn": self.new_fgn, "cp": is_cp, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results

@@ -117,10 +117,22 @@ def get_on_fit_config_fn(context: Context):
     learning_rate = float(context.run_config["learning-rate"])
     weight_decay = float(context.run_config["weight-decay"])
     participants_name = context.run_config["participants-name"]
+    decay_step = int(context.run_config["decay-step"])
+    momentum = float(context.run_config["momentum"])
 
     def on_fit_config(server_round: int) -> Dict[str, Any]:
-        return {"server_round": server_round, "epochs": epochs, "learning_rate": learning_rate,
-                "weight_decay": weight_decay, "participants_name": participants_name}
+        # testing fgn
+        if server_round % decay_step == 0:
+            mul_factor = server_round // decay_step
+            lr = learning_rate
+            for _ in range(mul_factor):
+                lr *= weight_decay
+        else:
+            lr = learning_rate
+
+        return {"server_round": server_round, "epochs": epochs, "learning_rate": lr,
+                "weight_decay": weight_decay, "participants_name": participants_name,
+                "momentum": momentum}
 
     return on_fit_config
 
@@ -138,9 +150,11 @@ def get_fit_metrics_aggregation_fn():
         accuracies = [num_examples * m["acc"] for num_examples, m in metrics]
         losses = [num_examples * m["loss"] for num_examples, m in metrics]
         examples = [num_examples for num_examples, _ in metrics]
+        # testing
+        gns = [m["gn"] for _, m in metrics]
 
         # Aggregate and return custom metric (weighted average)
-        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples)}
+        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples), "avg_gn": sum(gns)/len(gns)}
 
     return handle_fit_metrics
 

@@ -17,6 +17,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.utils as U
+import torch.nn.functional as F
+from PIL import Image
+
 from flwr.client import NumPyClient, Client
 from flwr.common import (
     Context,
@@ -36,7 +39,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torchvision.models import AlexNet_Weights, alexnet
 from torchvision.transforms import Compose, Normalize, ToTensor, InterpolationMode, Resize, CenterCrop, \
-    RandomHorizontalFlip, RandomCrop
+    RandomHorizontalFlip, RandomCrop, ToPILImage
 
 
 # -------------------------
@@ -68,7 +71,7 @@ class alexnet(nn.Module):
             nn.MaxPool2d(kernel_size=2),
         )
 
-        self.classifier= nn.Sequential(
+        self.classifier = nn.Sequential(
             nn.Dropout(p=0.05),
             nn.Linear(256 * 2 * 2, 128),
             nn.ReLU(True),
@@ -85,8 +88,30 @@ class alexnet(nn.Module):
 
         return x
 
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = torch.flatten(x, 1)  # flatten all dimensions except batch
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
 def build_model(num_classes: int = 10, pretrained: bool = False) -> nn.Module:
-    return alexnet()
+    return SimpleCNN()
+
 
 # -------------------------
 # Utilitários de pesos
@@ -126,22 +151,24 @@ def set_weights(net: nn.Module, parameters: NDArrays) -> None:
 
 def build_train_transforms():
     return Compose([
-        RandomCrop(32, padding=4),
         RandomHorizontalFlip(),
         ToTensor(),
         Normalize(mean=[0.4914, 0.4822, 0.4465],
-                  std=[0.2470, 0.2435, 0.2616]),
+                  std=[0.2470, 0.2435, 0.2616])
     ])
+
 
 def build_test_transforms():
     return Compose([
         ToTensor(),
         Normalize(mean=[0.4914, 0.4822, 0.4465],
-                  std=[0.2470, 0.2435, 0.2616]),
+                  std=[0.2470, 0.2435, 0.2616])
     ])
 
+
 def apply_transforms(batch, tfm):
-    batch["img"] = [tfm(img) for img in batch["img"]]
+    batch["img"] = [tfm(img.convert("RGB")) if isinstance(img, Image.Image) else tfm(img) for
+                    img in batch["img"]]
     return batch
 
 
@@ -150,14 +177,15 @@ def apply_transforms(batch, tfm):
 # -------------------------
 def load_fds_partition(partition_id: int, num_partitions: int, batch_size: int = 16):
     partitioner = DirichletPartitioner(
-        num_partitions=num_partitions, alpha=1.0, partition_by="label", min_partition_size=2, self_balancing=True
+        num_partitions=num_partitions, alpha=1.0, seed=1, partition_by="label", min_partition_size=0
     )
     fds = FederatedDataset(
         dataset="uoft-cs/cifar10",
         partitioners={"train": partitioner},
     )
     tfm_train = build_train_transforms()
-    ds_train = fds.load_partition(partition_id).with_transform(lambda b: apply_transforms(b, tfm_train))
+    partition = fds.load_partition(partition_id)
+    ds_train = partition.with_transform(lambda b: apply_transforms(b, tfm_train))
     trainloader = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
 
     return trainloader
@@ -170,7 +198,8 @@ def load_probe_loader(batch_size: int = 16) -> DataLoader:
         partitioners={"train": 1},
     )
     tfm_test = build_test_transforms()
-    testset = fds.load_split("test").with_transform(lambda b: apply_transforms(b, tfm_test))
+    partition = fds.load_split("test")
+    testset = partition.with_transform(lambda b: apply_transforms(b, tfm_test))
     return DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 
@@ -182,7 +211,8 @@ def load_central_eval_loader(batch_size: int = 16) -> DataLoader:
 # -------------------------
 # Treino/avaliação local (cliente)
 # -------------------------
-def train_one_round(net: nn.Module, loader: DataLoader, criterion: nn.Module, opt: Optimizer, epochs: int, device: torch.device) -> (float,float):
+def train_one_round(net: nn.Module, loader: DataLoader, criterion: nn.Module, opt: Optimizer, epochs: int,
+                    device: torch.device) -> (float, float):
     net.to(device)
     net.train()
     total_loss = 0.0
@@ -206,10 +236,8 @@ def train_one_round(net: nn.Module, loader: DataLoader, criterion: nn.Module, op
             for parms in net.parameters():
                 gnorm = parms.grad.detach().data.norm(2)
                 temp_norm = temp_norm + (gnorm.item()) ** 2
-            if grad_norm == 0:
-                grad_norm = temp_norm
-            else:
-                grad_norm = grad_norm + temp_norm
+
+            grad_norm = grad_norm + temp_norm
 
         GNorm.append(grad_norm)
 
@@ -232,7 +260,7 @@ def evaluate_model(net: nn.Module, loader: DataLoader, device: torch.device) -> 
             tot_loss += loss
             pred = logits.argmax(dim=1)
             correct += (pred == y).sum().item()
-            n += y.numel()
+            n += y.size(0)
     return tot_loss / max(1, len(loader)), correct / max(1, n)
 
 
@@ -269,6 +297,7 @@ class FlowerClient(NumPyClient):
         set_weights(self.net, parameters)
         loss, acc = evaluate_model(self.net, self.trainloader, self.device)
         return float(loss), len(self.trainloader.dataset), {"val_accuracy": float(acc)}
+
 
 def client_fn(context: Context) -> Client:
     part_id = context.node_config["partition-id"]
@@ -345,11 +374,12 @@ class FedAvgWithFgn(FedAvg):
         model = self.model_fn()
         set_weights(model, nd)
         loss, acc = evaluate_model(model, self.central_eval_loader, self.server_device)
+
         # Registra fgn
         self.old_fgn = max([np.mean(self.Norms[-self.Window - 1:-1]), 0.0000001])
         self.new_fgn = np.mean(self.Norms[-self.Window:])
 
-        if (self.new_fgn - self.old_fgn)/self.old_fgn >= 0.01:
+        if (self.new_fgn - self.old_fgn) / self.old_fgn >= 0.01:
             is_cp = True
         else:
             is_cp = False
@@ -361,7 +391,8 @@ class FedAvgWithFgn(FedAvg):
         with open(self.metrics_csv_path, "a", newline="") as f:
             csv.writer(f).writerow(row)
 
-        print(f"[Round {server_round}] Central eval -> loss={loss:.4f}, acc={acc:.4f}, fgn={self.new_fgn:.4f}, cp={is_cp}")
+        print(
+            f"[Round {server_round}] Central eval -> loss={loss:.4f}, acc={acc:.4f}, fgn={self.new_fgn:.4f}, cp={is_cp}")
         return float(loss), {"accuracy": float(acc)}
 
 
@@ -369,10 +400,9 @@ class FedAvgWithFgn(FedAvg):
 # ServerApp
 # -------------------------
 def get_on_fit_config_fn(epochs, learning_rate, weight_decay, decay_step):
-
     def on_fit_config(server_round: int) -> Dict[str, Any]:
         if server_round % decay_step == 0:
-            mul_factor = server_round / decay_step
+            mul_factor = server_round // decay_step
             lr = learning_rate
             for _ in range(mul_factor):
                 lr *= weight_decay
@@ -383,13 +413,14 @@ def get_on_fit_config_fn(epochs, learning_rate, weight_decay, decay_step):
 
     return on_fit_config
 
+
 def server_fn(context: Context) -> ServerAppComponents:
     num_rounds = context.run_config.get("num-server-rounds", 20)
     fraction_fit = context.run_config.get("fraction-fit", 0.1)
     learning_rate = context.run_config.get("learning_rate", 0.01)
     weight_decay = context.run_config.get("weight-decay", 0.9)
     decay_step = context.run_config.get("decay-step", 10)
-    epochs = context.run_config.get("epochs", 3)
+    epochs = context.run_config.get("epochs", 10)
     Window = context.run_config.get("window", 10)
 
     init_nd = get_weights(build_model())

@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.utils as U
 
 from utils.dataset.config import DatasetConfig
 from utils.model.factory import ModelFactory
@@ -26,10 +27,14 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
     squared_sum = num_samples = 0
     key = DatasetConfig.BATCH_KEY[dataset_id]
     value = DatasetConfig.BATCH_VALUE[dataset_id]
+    # testing
+    GNorm = []
 
     for epoch in range(1, epochs + 1):
         total_loss = 0
         correct_pred = total_pred = 0
+        # testing
+        grad_norm = 0
 
         for batch in dataloader:
             if isinstance(batch, dict):
@@ -56,19 +61,34 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
             correct_pred += (predicted == y).sum().item()
 
             loss.backward()
+            U.clip_grad_norm_(model.parameters(), max_norm=10.0)
             optimizer.step()
             total_loss += loss.item() * y.size(0)
+
+            # testing
+            temp_norm = 0
+            for parms in model.parameters():
+                gnorm = parms.grad.detach().data.norm(2)
+                temp_norm = temp_norm + (gnorm.item()) ** 2
+
+            grad_norm = grad_norm + temp_norm
+
+        # testing
+        GNorm.append(grad_norm)
 
         if epoch == epochs:
             avg_acc = correct_pred / total_pred
             avg_loss = total_loss / total_pred
+            # testing
+            Lrnow = optimizer.param_groups[0]['lr']
+            avg_gn  = np.mean(GNorm) * Lrnow
 
             if criterion.reduction == "none":
                 stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))
             else:
                 stat_util = 0
 
-    return avg_loss, avg_acc, stat_util
+    return avg_loss, avg_acc, stat_util, avg_gn
 
 
 def test(model, dataloader, device, dataset_id):

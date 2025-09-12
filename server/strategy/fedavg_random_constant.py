@@ -79,6 +79,11 @@ class FedAvgRandomConstant(BaseStrategy):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
+        #testing
+        if server_round % 2 == 0 and server_round > 5:
+            avg_gn = metrics_aggregated["avg_gn"]
+            self.Norms.append(avg_gn)
+
         return parameters_aggregated, metrics_aggregated
 
     def _do_aggregate_evaluate(self, server_round, results, failures) -> tuple[Optional[float], dict[str, Scalar]]:
