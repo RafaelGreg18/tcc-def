@@ -4,8 +4,10 @@ import os
 from logging import WARNING
 from typing import Optional
 
+import numpy as np
 from flwr.common import Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log
 from flwr.server.strategy.aggregate import aggregate
+from scipy.interpolate import UnivariateSpline
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 
@@ -13,10 +15,19 @@ from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 class FedAvgRandomCPEval(FedAvgRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # fgn
+        self.Norms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.Window = 10
+        self.old_fgn = 0
+        self.new_fgn = 0
 
-        # eoss - edge of stochastic stability
-        self.bs = 0
-        self.r = 0
+        # ecolearn
+        self.mag_deriv = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.avg_mag = 0
+
+        # phases in dnn
+        self.training_loss = []
+
 
     def _do_initialization(self, client_manager):
         current_date = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -61,20 +72,14 @@ class FedAvgRandomCPEval(FedAvgRandomConstant):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        if server_round >= 2:
-            # eoss
-            w_bs, w_r, n = 0.0, 0.0, 0
-            for _, res in results:
-                n += res.num_examples
-                if "bs" in res.metrics:
-                    w_bs += float(res.metrics["bs"]) * res.num_examples
-                if "r" in res.metrics:
-                    w_r += float(res.metrics["r"]) * res.num_examples
-            if n > 0:
-                bs_avg = w_bs / n
-                r_avg = w_r / n
-                self.bs = bs_avg
-                self.r = r_avg
+        # fgn
+        if server_round % 2 == 0 and server_round > 5:
+            avg_gn = metrics_aggregated["avg_gn"]
+            self.Norms.append(avg_gn)
+        # phases
+        if server_round > 1:
+            avg_loss = metrics_aggregated["loss"]
+            self.training_loss.append(avg_loss)
 
         return parameters_aggregated, metrics_aggregated
 
@@ -91,7 +96,25 @@ class FedAvgRandomCPEval(FedAvgRandomConstant):
             return None
         loss, metrics = eval_res
 
-        my_results = {"cen_loss": loss, "bs_avg": self.bs, "r_avg": self.r, **metrics}
+        # fgn
+        if server_round % 2 == 0 and server_round > 5:
+            self.old_fgn = max([np.mean(self.Norms[-self.Window - 1:-1]), 0.0000001])
+            self.new_fgn = np.mean(self.Norms[-self.Window:])
+        else:
+            self.old_fgn = 0
+            self.new_fgn = 0
+
+        # ecolearn
+        if server_round > 5:
+            self.ecolearn_deriv_mag(metrics, server_round)
+            self.avg_mag = np.mean(self.mag_deriv[-self.Window:])
+
+        if server_round > 1:
+            fit_loss = self.training_loss[-1]
+        else:
+            fit_loss = 0
+
+        my_results = {"cen_loss": loss, "fgn": self.new_fgn, "mag_deriv": self.avg_mag, "fit_loss": fit_loss, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
@@ -101,3 +124,29 @@ class FedAvgRandomCPEval(FedAvgRandomConstant):
             json.dump(self.performance_metrics_to_save, json_file, indent=2)
 
         return loss, metrics
+
+    def ecolearn_deriv_mag(self, metrics, server_round):
+        rounds = [round for round in range(2, server_round + 1)]
+        accs = []
+
+        # previous rounds
+        for round in rounds[:-1]:
+            acc = self.performance_metrics_to_save[round]["cen_accuracy"]
+            accs.append(acc)
+
+        # current round
+        accs.append(metrics["cen_accuracy"])
+
+        # Crie a spline suavizante
+        spline = UnivariateSpline(rounds, accs)
+
+        # Obtenha a spline da primeira derivada
+        derivative_spline = spline.derivative(n=1)
+
+        # Calcule a magnitude da derivada nos pontos de dados originais
+        derivative_values = derivative_spline(rounds)
+
+        # Obtenha a última magnitude da derivada e insira na lista
+        mag_deriv =  abs(derivative_values[-1])
+        self.mag_deriv.append(mag_deriv)
+

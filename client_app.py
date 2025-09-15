@@ -1,9 +1,10 @@
-from flwr.client import ClientApp, NumPyClient
+from flwr.client import ClientApp
 from flwr.common import Context
 
 from client.base import BaseClient
+from client.critical import CriticalClient
 from utils.simulation.config import set_seed
-from utils.simulation.workflow import get_user_dataloader, get_initial_model, config_preprocess_validation
+from utils.simulation.workflow import get_user_dataloader, get_initial_model
 
 
 def client_fn(context: Context):
@@ -17,7 +18,15 @@ def client_fn(context: Context):
     # 4. dataloader
     dataloader = get_user_dataloader(context, cid)
     dataset_id = context.run_config["hugginface-id"]
+    # 5. client
+    is_critical = context.run_config["is-critical"]
 
-    return BaseClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader, dataset_id=dataset_id).to_client()
+    if is_critical:
+        return CriticalClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                              dataset_id=dataset_id).to_client()
+    else:
+        return BaseClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                          dataset_id=dataset_id).to_client()
+
 
 app = ClientApp(client_fn)

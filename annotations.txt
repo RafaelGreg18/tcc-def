@@ -8,3 +8,4 @@ Ponto crítico:
 1 - CKA permite encontrar fase crítica. Uma spline com tangente no ponto com inclinação menor que limite é suficiente.
     - Precisa de dataset externo.
 2 - Similaridade de cosseno na última camada é insuficiente.
+3 - FGN com adaptações de janela e avaliações a cada duas rodadas funciona.

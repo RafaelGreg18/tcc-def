@@ -29,7 +29,8 @@ def server_fn(context: Context):
     on_eval_config_fn = get_on_eval_config_fn(context)
 
     # 6. fit metrics
-    fit_metrics_aggregation_fn = get_fit_metrics_aggregation_fn()
+    is_critical = context.run_config["is-critical"]
+    fit_metrics_aggregation_fn = get_fit_metrics_aggregation_fn(is_critical)
 
     # 7. fit metrics
     evaluate_metrics_aggregation_fn = get_evaluate_metrics_aggregation_fn()

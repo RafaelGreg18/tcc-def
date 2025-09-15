@@ -55,11 +55,6 @@ class BaseStrategy(Strategy):
         self.system_metrics_to_save = {}
         self.model_performance_path = None
         self.performance_metrics_to_save = {}
-        # testing fgn
-        self.Norms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.Window = 10
-        self.old_fgn = 0
-        self.new_fgn = 0
 
     def __repr__(self) -> str:
         return self.repr
@@ -96,20 +91,7 @@ class BaseStrategy(Strategy):
             return None
         loss, metrics = eval_res
 
-        # testing fgn
-        if server_round % 2 == 0 and server_round > 5:
-            self.old_fgn = max([np.mean(self.Norms[-self.Window - 1:-1]), 0.0000001])
-            self.new_fgn = np.mean(self.Norms[-self.Window:])
-
-            if (self.new_fgn - self.old_fgn) / self.old_fgn >= 0.01:
-                is_cp = True
-            else:
-                is_cp = False
-        else:
-            self.new_fgn = 0
-            is_cp = False
-
-        my_results = {"cen_loss": loss, "fgn": self.new_fgn, "cp": is_cp, **metrics}
+        my_results = {"cen_loss": loss, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results

@@ -27,6 +27,58 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
     squared_sum = num_samples = 0
     key = DatasetConfig.BATCH_KEY[dataset_id]
     value = DatasetConfig.BATCH_VALUE[dataset_id]
+
+    for epoch in range(1, epochs + 1):
+        total_loss = 0
+        correct_pred = total_pred = 0
+
+        for batch in dataloader:
+            if isinstance(batch, dict):
+                x, y = batch[key].to(device), batch[value].to(device)
+            elif isinstance(batch, list):
+                x, y = batch[0].to(device), batch[1].to(device)
+
+            optimizer.zero_grad()
+            outputs = model(x)
+
+            if criterion.reduction == "none":
+                losses = criterion(outputs, y)
+
+                if epoch == epochs:
+                    squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
+                    num_samples += len(losses)
+
+                loss = losses.mean()
+            else:
+                loss = criterion(outputs, y)
+
+            predicted = outputs.argmax(1)
+            total_pred += y.size(0)
+            correct_pred += (predicted == y).sum().item()
+
+            loss.backward()
+            U.clip_grad_norm_(model.parameters(), max_norm=10.0)
+            optimizer.step()
+            total_loss += loss.item() * y.size(0)
+
+        if epoch == epochs:
+            avg_acc = correct_pred / total_pred
+            avg_loss = total_loss / total_pred
+
+            if criterion.reduction == "none":
+                stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))
+            else:
+                stat_util = 0
+
+    return avg_loss, avg_acc, stat_util
+
+
+def train_critical(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
+    model.to(device)
+    model.train()
+    squared_sum = num_samples = 0
+    key = DatasetConfig.BATCH_KEY[dataset_id]
+    value = DatasetConfig.BATCH_VALUE[dataset_id]
     # testing
     GNorm = []
 
@@ -81,7 +133,7 @@ def train(model, dataloader, epochs, criterion, optimizer, device, dataset_id):
             avg_loss = total_loss / total_pred
             # testing
             Lrnow = optimizer.param_groups[0]['lr']
-            avg_gn  = np.mean(GNorm) * Lrnow
+            avg_gn = np.mean(GNorm) * Lrnow
 
             if criterion.reduction == "none":
                 stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))

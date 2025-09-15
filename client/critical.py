@@ -2,10 +2,10 @@ import torch
 from flwr.client import NumPyClient
 from flwr.common import NDArrays, Scalar
 
-from utils.model.manipulation import set_weights, train, get_weights, test
+from utils.model.manipulation import set_weights, get_weights, test, train_critical
 
 
-class BaseClient(NumPyClient):
+class CriticalClient(NumPyClient):
     def __init__(self, cid, flwr_cid, model, dataloader, dataset_id, **kwargs):
         super().__init__(**kwargs)
         self.cid = cid
@@ -20,7 +20,8 @@ class BaseClient(NumPyClient):
         if int(config["server_round"]) == 1:
             set_weights(self.model, parameters)
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
-                                                                           "loss": 0, "acc": 0, "stat_util": 0}
+                                                                           "loss": 0, "acc": 0, "stat_util": 0,
+                                                                           "gn": 0}  # fgn
         else:
             # update model weights
             set_weights(self.model, parameters)
@@ -35,12 +36,12 @@ class BaseClient(NumPyClient):
                                         weight_decay=weight_decay)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-            avg_loss, avg_acc, stat_util = train(self.model, self.dataloader, epochs, criterion,
-                                                 optimizer, device, self.dataset_id)
+            avg_loss, avg_acc, stat_util, gn = train_critical(self.model, self.dataloader, epochs, criterion,
+                                                              optimizer, device, self.dataset_id)
 
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                                            "loss": avg_loss, "acc": avg_acc,
-                                                                           "stat_util": stat_util}
+                                                                           "stat_util": stat_util, "gn": gn}  # fgn
 
     def evaluate(self, parameters, config):
         if int(config["server_round"]) > 1:

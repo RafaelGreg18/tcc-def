@@ -11,4 +11,4 @@ faz nada e apenas serve para responder os valores ao servidor, e rodada 2 é enc
 7 - Adicionar twophasefedavg (ok)
 8 - Modificar twophasefedavg para que os testes tenham R rodadas com C1 em r <= R/2 e C2 em r > R/2. (ok)
 9 - Reduzir a similaridade do cosseno ao classificador. (ok)
-10 - Experimentar em thedeep 2 o comportamento de "Phase diagram of early training dynamics in deep networks".
+10 - Experimentar em thedeep 2 o comportamento de "Phase diagram of early training dynamics in deep networks". (ok)

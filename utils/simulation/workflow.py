@@ -144,17 +144,20 @@ def get_on_eval_config_fn(context: Context):
     return on_eval_config
 
 
-def get_fit_metrics_aggregation_fn():
+def get_fit_metrics_aggregation_fn(is_critical: bool):
     def handle_fit_metrics(metrics: List[Tuple[int, Metrics]]) -> Metrics:
         # Multiply accuracy of each client by number of examples used
         accuracies = [num_examples * m["acc"] for num_examples, m in metrics]
         losses = [num_examples * m["loss"] for num_examples, m in metrics]
         examples = [num_examples for num_examples, _ in metrics]
-        # testing
-        gns = [m["gn"] for _, m in metrics]
 
-        # Aggregate and return custom metric (weighted average)
-        return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples), "avg_gn": sum(gns)/len(gns)}
+        if is_critical:
+            # fgn
+            gns = [m["gn"] for _, m in metrics]
+            # Aggregate and return custom metric (weighted average)
+            return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples), "avg_gn": sum(gns)/len(gns)}
+        else:
+            return {"acc": sum(accuracies) / sum(examples), "loss": sum(losses) / sum(examples)}
 
     return handle_fit_metrics
 

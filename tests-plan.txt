@@ -2,7 +2,7 @@ Motivação:
 A quantidade de clientes selecionados impacta o desempenho e o custo do aprendizado?
 - Sem bateria
 - Exp:
-    Variar fração de participação C entre 10% e 100%.
+    Variar fração de participação C entre 5% e 20%.
     Medir o desempenho em 100 rodadas.
     Encontrar acurácia máxima.
     Medir quantas rodadas cada C levou para alcançar 75% e 90% da acurácia máxima.
@@ -13,7 +13,7 @@ A quantidade de clientes selecionados impacta o desempenho e o custo do aprendiz
 
 Qual o impacto da variação da quantidade de clientes selecionados no desempenho e custo do aprendizado?
 - Uma fronteira de pareto relacionado o desempenho do modelo e o custo em energia/comunicação/pegada de carbono.
-- Exp:
+- Exp-2:
     1 - Definir ponto crítico a partir de CriticalFL ou Ecolearn.
     2 - Grade de políticas 2×2 (duas fases): C antes ∈ {5,10,20} e  C depois no mesmo conjunto. Para cada
     par, treine até T rodadas (ponto crítico) mantendo o resto idêntico (semeadura, épocas locais, LR, agregação).
@@ -22,6 +22,12 @@ Qual o impacto da variação da quantidade de clientes selecionados no desempenh
     Identifique o joelho da curva (melhor compromisso).
     * 3 seeds
     * Uma grade variando niid de (0.1, 0.3, 1.0)
+- Exp-3:
+    1 - Rodadas: 300.
+    2 - Participantes: 10
+    3 - Medições por execução: acurácia em teste, energia consumida, fgn, perda em treino, magnitude da derivada
+    * 3 seeds
+    * Variando niid de (0.1, 0.3, 1.0)
 
 ========================================================================================================================
 Este experimento abaixo não farei: deixar como ablação

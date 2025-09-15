@@ -16,6 +16,7 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         self.num_participants_bcp = self.context.run_config["num-participants-bcp"]
         self.num_participants_acp = self.context.run_config["num-participants-acp"]
         self.max_rounds = self.context.run_config["num-rounds"]
+        self.cp = int(self.context.run_config["cp"])
         # self.smooth_window = self.context.run_config["smooth-window"]
         # self.tau_deriv = self.context.run_config["tau-deriv"]
         # self._acc_hist = []
@@ -32,7 +33,7 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         dir = self.context.run_config["dir-alpha"]
 
         output_dir = os.path.join("outputs", current_date,
-                                  f"{aggregation_name}_{selection_name}_{participants_name}_BCP_{self.num_participants_bcp}_ACP_{self.num_participants_acp}_battery_{self.use_battery}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
+                                  f"{aggregation_name}_{selection_name}_{participants_name}_BCP_{self.num_participants_bcp}_ACP_{self.num_participants_acp}_CP_{self.cp}_battery_{self.use_battery}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
         os.makedirs(output_dir, exist_ok=True)
 
         self.model_performance_path = os.path.join(output_dir, "model_performance.json")
@@ -98,7 +99,7 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         return loss, metrics
 
     def update_cp(self, server_round: int) -> int:
-        if server_round > self.max_rounds//2:
+        if server_round > self.cp:
             self.is_cp = False
     #     if server_round > 1:
     #         self._push_accuracy(accuracy)

@@ -90,7 +90,7 @@ participants-name = "constant"
 selection-name = "random"
 aggregation-name = "fedavg"
 num-clients = 100 #shakespeare:903 cifar10:100 speech_commands:2112
-num-rounds = 200 #100
+num-rounds = 100 #100
 num-participants = 10 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
 num-evaluators = 0
 
@@ -99,7 +99,10 @@ num-participants-bcp = 10
 num-participants-acp = 10
 smooth-window = 5
 tau-deriv = 0.005
+cp=25
+
 #Critical
+is-critical = false
 
 
 [tool.flwr.federations]
@@ -139,6 +142,13 @@ options.backend.client-resources.num-cpus = 1
 options.backend.client-resources.num-gpus = 0.5
 options.backend.init_args.num_cpus = 10
 options.backend.init_args.num_gpus = 2
+
+[tool.flwr.federations.gpu-sim-dl-24]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 3
 
 [tool.flwr.federations.gpu-sim-lrc]
 options.num-supernodes = 100
