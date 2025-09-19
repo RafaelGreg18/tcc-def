@@ -7,6 +7,7 @@ import random
 from logging import WARNING
 from typing import Optional
 
+import numpy as np
 import torch
 from flwr.common import FitIns, Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log
 from flwr.server.client_proxy import ClientProxy
@@ -84,6 +85,7 @@ class FedAvgRandomRecombination(BaseStrategy):
 
 
         recombined_models = []
+        weights = np.array([])
         model_name = self.context.run_config['model-name']
         input_shape = self.context.run_config['input-shape']
         num_classes = self.context.run_config['num-classes']
@@ -93,10 +95,12 @@ class FedAvgRandomRecombination(BaseStrategy):
 
         for _, fit_res in results:
             ndarrays = parameters_to_ndarrays(fit_res.parameters)
+            weights = np.append(weights, fit_res.num_examples)
             set_weights(model, ndarrays)
             recombined_models.append(copy.deepcopy(model))
 
-        recombined_models = self.recombination(recombined_models)
+        weights = (weights/weights.sum()).tolist()
+        recombined_models = self.recombination(recombined_models, weights)
 
         for model in recombined_models:
             ndarrays = get_weights(model)
@@ -140,7 +144,7 @@ class FedAvgRandomRecombination(BaseStrategy):
 
         return loss_aggregated, metrics_aggregated
 
-    def recombination(self, models):
+    def recombination(self, models, weights):
         # models: lista de nn.Module (mesma arquitetura)
 
         with torch.no_grad():
@@ -150,9 +154,12 @@ class FedAvgRandomRecombination(BaseStrategy):
             nr = list(range(self.num_participants))
             keys = list(sds[0].keys())
             for k in keys:
-                random.shuffle(nr)
+                # random.shuffle(nr)
+                idx = np.random.choice(nr, self.num_participants, replace=True, p=weights).tolist()
+
                 for i in range(self.num_participants):
-                    new_sds[i][k].copy_(sds[nr[i]][k])  # copia in-place
+                    # new_sds[i][k].copy_(sds[nr[i]][k])  # copia in-place
+                    new_sds[i][k].copy_(sds[idx[i]][k])  # copia in-place
 
             new_models = [copy.deepcopy(m) for m in models]
             for m, sd in zip(new_models, new_sds):
