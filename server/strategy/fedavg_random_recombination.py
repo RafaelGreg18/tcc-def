@@ -1,6 +1,7 @@
 import ast
 import copy
 import datetime
+import json
 import math
 import os
 import random
@@ -21,6 +22,9 @@ from utils.model.manipulation import set_weights, get_weights, ModelPersistence
 class FedAvgRandomRecombination(BaseStrategy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.metrics = {}
+        self.loss = 0
+        self.is_orig = True
 
     def _do_initialization(self, client_manager):
         current_date = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -44,6 +48,32 @@ class FedAvgRandomRecombination(BaseStrategy):
 
     def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:
         return self.num_evaluators, self.num_participants # num_eval > num_part
+
+    # Add in v3
+    # To report the result of the best: orig or orig+recom
+    def evaluate(
+            self, server_round: int, parameters: Parameters
+    ) -> Optional[tuple[float, dict[str, Scalar]]]:
+        """Evaluate model parameters using an evaluation function."""
+        if self.evaluate_fn is None:
+            # No evaluation function provided
+            return None
+        # parameters_ndarrays = parameters_to_ndarrays(parameters)
+        # eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
+        # if eval_res is None:
+        #     return None
+        # loss, metrics = eval_res
+
+        my_results = {"cen_loss": self.loss, "is_orig": self.is_orig, **self.metrics}
+
+        # Insert into local dictionary
+        self.performance_metrics_to_save[server_round] = my_results
+
+        # Save metrics as json
+        with open(self.model_performance_path, "w") as json_file:
+            json.dump(self.performance_metrics_to_save, json_file, indent=2)
+
+        return self.loss, self.metrics
 
     def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
         config = {}
@@ -83,9 +113,6 @@ class FedAvgRandomRecombination(BaseStrategy):
             if result[1] < min_num_examples:
                 min_num_examples = result[1]
 
-
-        recombined_models = []
-        weights = np.array([])
         model_name = self.context.run_config['model-name']
         input_shape = self.context.run_config['input-shape']
         num_classes = self.context.run_config['num-classes']
@@ -93,12 +120,27 @@ class FedAvgRandomRecombination(BaseStrategy):
         model_path = root_model_dir + model_name + '.pth'
         model = ModelPersistence.load(model_path, model_name, input_shape=input_shape, num_classes=num_classes)
 
+        # Add in V3
+        # Orig
+        orig_aggregated_ndarrays = aggregate(weights_results)
+        eval_res = self.evaluate_fn(server_round, orig_aggregated_ndarrays, {})
+        orig_loss, orig_metrics = eval_res
+        orig_acc = orig_metrics["cen_accuracy"]
+
+
+        # Add in V3
+        # To chosse between orig and orig+recom
+        recombined_models = []
+        weights = np.array([])
+
         for _, fit_res in results:
             ndarrays = parameters_to_ndarrays(fit_res.parameters)
+            # add in V2
             weights = np.append(weights, fit_res.num_examples)
             set_weights(model, ndarrays)
             recombined_models.append(copy.deepcopy(model))
 
+        # add in V2
         weights = (weights/weights.sum()).tolist()
         recombined_models = self.recombination(recombined_models, weights)
 
@@ -106,8 +148,23 @@ class FedAvgRandomRecombination(BaseStrategy):
             ndarrays = get_weights(model)
             weights_results.append((ndarrays, min_num_examples))
 
-        aggregated_ndarrays = aggregate(weights_results)
-        parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
+        recom_aggregated_ndarrays = aggregate(weights_results)
+
+        # Add in V3
+        eval_res = self.evaluate_fn(server_round, recom_aggregated_ndarrays, {})
+        recom_loss, recom_metrics = eval_res
+        recom_acc = recom_metrics["cen_accuracy"]
+
+        if recom_acc > orig_acc:
+            parameters_aggregated = ndarrays_to_parameters(recom_aggregated_ndarrays)
+            self.metrics = recom_metrics
+            self.loss = recom_loss
+            self.is_orig = False
+        else:
+            parameters_aggregated = ndarrays_to_parameters(orig_aggregated_ndarrays)
+            self.metrics = orig_metrics
+            self.loss = orig_loss
+            self.is_orig = True
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -154,11 +211,15 @@ class FedAvgRandomRecombination(BaseStrategy):
             nr = list(range(self.num_participants))
             keys = list(sds[0].keys())
             for k in keys:
+                # v2
                 # random.shuffle(nr)
+                # add in v2
                 idx = np.random.choice(nr, self.num_participants, replace=True, p=weights).tolist()
 
                 for i in range(self.num_participants):
+                    # v2
                     # new_sds[i][k].copy_(sds[nr[i]][k])  # copia in-place
+                    # add in v2
                     new_sds[i][k].copy_(sds[idx[i]][k])  # copia in-place
 
             new_models = [copy.deepcopy(m) for m in models]
