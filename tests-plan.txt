@@ -29,6 +29,15 @@ Qual o impacto da variação da quantidade de clientes selecionados no desempenh
     * 3 seeds
     * Variando niid de (0.1, 0.3, 1.0)
 
+A recombinação de camadas dos modelos localmente treinados pode ser utilizada na criação de clientes virtuais?
+    Exp-1: Virtuais antes do limite R
+    1 - Até uma rodada limite R, utilizar clientes reais e virtuais (recombinações) na agregação. Após a rodada, só os reais.
+    2 - Variar clientes reais e virtuais em 5, 10, 20.
+    3 - Variar R em 5, 10, 20, 40.
+    4 - Total de rodadas 50.
+    5 - Dir(alpha) 0.1, 0.3, 1.0
+    Exp-2: Virtuais depois do limite R
+    ... - Repetir os paços acima.
 ========================================================================================================================
 Este experimento abaixo não farei: deixar como ablação
 Como a quantidade de clientes selecionados impacta a energia disponível para outras atividades em um cenário com bateria?

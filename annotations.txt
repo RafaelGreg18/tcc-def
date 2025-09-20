@@ -9,3 +9,9 @@ Ponto crítico:
     - Precisa de dataset externo.
 2 - Similaridade de cosseno na última camada é insuficiente.
 3 - FGN com adaptações de janela e avaliações a cada duas rodadas funciona.
+
+Recombinações:
+1 - Na agregação do FedMR, os pesos recombinados fazem com que camada sejam seguencialmente espostas a dados distintos, sem serem
+afetados pela perda de conhecimento da agregação.
+2 - Na utilização em clientes virtuais, a recombinação é afetada pela agregação. Sendo apenas um repeso de camadas.
+3 - Há alguma forma na literatura de repesar camadas?

@@ -25,6 +25,7 @@ class FedAvgRandomRecombination(BaseStrategy):
         self.metrics = {}
         self.loss = 0
         self.is_orig = True
+        self.mult_factor = int(self.context.run_config["mult-factor"])
 
     def _do_initialization(self, client_manager):
         current_date = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -206,23 +207,32 @@ class FedAvgRandomRecombination(BaseStrategy):
 
         with torch.no_grad():
             sds = [m.state_dict() for m in models]
-            new_sds = [copy.deepcopy(sd) for sd in sds]
+            # add v4
+            new_sds = []
+            for _ in range(self.mult_factor):
+                for idx in range(len(sds)):
+                    new_sds.append(copy.deepcopy(sds[idx]))
 
             nr = list(range(self.num_participants))
             keys = list(sds[0].keys())
             for k in keys:
                 # v2
                 # random.shuffle(nr)
-                # add in v2
-                idx = np.random.choice(nr, self.num_participants, replace=True, p=weights).tolist()
+                # add in v2, v4(mult_factor)
+                idx = np.random.choice(nr, self.num_participants * self.mult_factor, replace=True, p=weights).tolist()
 
-                for i in range(self.num_participants):
+                for i in range(self.num_participants * self.mult_factor):
                     # v2
                     # new_sds[i][k].copy_(sds[nr[i]][k])  # copia in-place
                     # add in v2
                     new_sds[i][k].copy_(sds[idx[i]][k])  # copia in-place
 
-            new_models = [copy.deepcopy(m) for m in models]
+            # add in v4
+            new_models = []
+            for _ in range(self.mult_factor):
+                for m in models:
+                    new_models.append(copy.deepcopy(m))
+
             for m, sd in zip(new_models, new_sds):
                 m.load_state_dict(sd)
 
