@@ -77,9 +77,9 @@ def get_central_testloader(context: Context):
     g = torch.Generator()
     g.manual_seed(seed)
 
-    test_loader = DatasetFactory.get_test_dataset(dataset_id, batch_size, num_partitions, dir_alpha, seed)
+    test_loader, proxy_loader = DatasetFactory.get_test_dataset(dataset_id, batch_size, num_partitions, dir_alpha, seed)
 
-    return test_loader
+    return test_loader, proxy_loader
 
 
 def get_user_dataloader(context: Context, cid):
@@ -179,7 +179,7 @@ def get_evaluate_metrics_aggregation_fn():
 
 def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_aggregation_fn: MetricsAggregationFn,
                  evaluate_metrics_aggregation_fn: MetricsAggregationFn, on_fit_config_fn: Callable,
-                 on_eval_config_fn: Callable, evaluate_fn: Callable):
+                 on_eval_config_fn: Callable, evaluate_fn: Callable, proxy_loader: DataLoader):
     participants_name = context.run_config["participants-name"]
     selection_name = context.run_config["selection-name"]
     aggregation_name = context.run_config["aggregation-name"]
@@ -241,7 +241,8 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
                                                      evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
                                                      on_fit_config_fn=on_fit_config_fn,
                                                      on_eval_config_fn=on_eval_config_fn,
-                                                     evaluate_fn=evaluate_fn)
+                                                     evaluate_fn=evaluate_fn,
+                                                     proxy_loader=proxy_loader)
 
     return strategy
 

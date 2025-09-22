@@ -4,9 +4,8 @@ from typing import Dict, Any, List
 
 import numpy as np
 import torch
-from datasets import DownloadConfig, concatenate_datasets, Dataset
 from datasets import Dataset as ArrowDataset
-
+from datasets import DownloadConfig, concatenate_datasets, Dataset
 from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import DirichletPartitioner, NaturalIdPartitioner
 from flwr_datasets.preprocessor import Merger
@@ -38,6 +37,7 @@ os.environ.setdefault("HF_DATASETS_DISABLE_MULTIPROCESSING", "1")
 # ----------------------------------------------------------------------
 _PROCESSOR = None
 
+
 def get_processor():
     """Instancia (lazy) o WhisperProcessor uma única vez por processo."""
     global _PROCESSOR
@@ -45,6 +45,7 @@ def get_processor():
         from transformers import WhisperProcessor
         _PROCESSOR = WhisperProcessor.from_pretrained("openai/whisper-tiny")
     return _PROCESSOR
+
 
 def encode_batch(batch):
     """Codifica um exemplo do Speech Commands para log-mel + alvo (12 classes).
@@ -71,6 +72,7 @@ def encode_batch(batch):
 # ----------------------------------------------------------------------
 
 N_MELS = 80
+
 
 def crnn_collate(batch, pad_value: float = 0.0):
     """
@@ -112,6 +114,7 @@ def crnn_collate(batch, pad_value: float = 0.0):
     y_out = torch.tensor([ex["targets"] for ex in clean], dtype=torch.long)
     return {"data": x_out, "targets": y_out}
 
+
 # ----------------------------------------------------------------------
 # Geração de silêncios para train
 # ----------------------------------------------------------------------
@@ -136,6 +139,8 @@ def prepare_silences_dataset(train_dataset, ratio_silence: float = 0.1) -> Arrow
             silence_to_add.append(entry)
 
     return ArrowDataset.from_list(silence_to_add) if len(silence_to_add) > 0 else ArrowDataset.from_list([])
+
+
 # ----------------------------------------------------------------------
 # Shakespeare (char-level)
 # ----------------------------------------------------------------------
@@ -143,12 +148,14 @@ ALL_LETTERS = (
     "\n !\"&'(),-.0123456789:;>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]abcdefghijklmnopqrstuvwxyz}"
 )
 
+
 def letter_to_vec(
         letter: str,
 ) -> int:
     """Return one-hot representation of given letter."""
     index = ALL_LETTERS.find(letter)
     return index
+
 
 def word_to_indices(
         word: str,
@@ -167,6 +174,7 @@ def word_to_indices(
     for count in word:
         indices.append(ALL_LETTERS.find(count))
     return indices
+
 
 class ShakespeareDataset(TorchDataset):
     """
@@ -207,6 +215,7 @@ class ShakespeareDataset(TorchDataset):
         """
         data, target = self.sentences_to_indices[index], self.labels[index]
         return torch.tensor(data), torch.tensor(target)
+
 
 # ----------------------------------------------------------------------
 # Fábrica
@@ -473,7 +482,7 @@ class DatasetFactory:
             num_partitions: int = 10,
             alpha: float = 0.5,
             seed: int = 42,
-    ) -> DataLoader:
+    ) -> (DataLoader, DataLoader):
         """
         Returns a DataLoader for the global test set (not partitioned).
         """
@@ -481,10 +490,20 @@ class DatasetFactory:
             fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
             test_ds = fds.load_split("test").with_transform(DatasetConfig.get_transform(dataset_id, is_train=False))
 
-            g = torch.Generator();
+            partition_proxy_test = test_ds.train_test_split(test_size=0.8, seed=seed)
+            partition_proxy = partition_proxy_test["train"]
+            partition_test = partition_proxy_test["test"]
+
+            g = torch.Generator()
             g.manual_seed(seed)
-            return DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0,
-                              worker_init_fn=seed_worker, generator=g)
+
+            testloader = DataLoader(partition_test, batch_size=batch_size, shuffle=False, num_workers=0,
+                                    worker_init_fn=seed_worker, generator=g)
+            proxyloader = DataLoader(partition_proxy, batch_size=batch_size, shuffle=False, num_workers=0,
+                                     worker_init_fn=seed_worker, generator=g)
+
+            return testloader, proxyloader
+
         elif dataset_id == "flwrlabs/shakespeare":
             test_ds = None
             fds = cls._get_federated_dataset(dataset_id, seed=seed)
@@ -493,7 +512,7 @@ class DatasetFactory:
                 dataset = ShakespeareDataset(partition)
                 test_ds = dataset if test_ds is None else ConcatDataset([test_ds, dataset])
 
-            g = torch.Generator();
+            g = torch.Generator()
             g.manual_seed(seed)
             return DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0,
                               worker_init_fn=seed_worker, generator=g)

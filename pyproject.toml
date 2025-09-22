@@ -105,7 +105,8 @@ cp=25
 is-critical = false
 
 #Recombination
-mult-factor = 3
+mult-factor = 1
+prioritize-sim = true
 
 
 [tool.flwr.federations]

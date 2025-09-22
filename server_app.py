@@ -19,7 +19,7 @@ def server_fn(context: Context):
     context.run_config["model-size"] = model_size_in_bits
 
     # 3. test dataset
-    test_loader = get_central_testloader(context)
+    test_loader, proxy_loader = get_central_testloader(context)
 
     # 4. evaluate function
     evaluate_fn = get_eval_fn(context, test_loader)
@@ -37,7 +37,7 @@ def server_fn(context: Context):
 
     # 8. strategy instantiation
     strategy = get_strategy(context, initial_parameters, fit_metrics_aggregation_fn, evaluate_metrics_aggregation_fn,
-                            on_fit_config_fn, on_eval_config_fn, evaluate_fn)
+                            on_fit_config_fn, on_eval_config_fn, evaluate_fn, proxy_loader)
 
     # 9. server definition
     components = get_server_app_components(context, strategy)
