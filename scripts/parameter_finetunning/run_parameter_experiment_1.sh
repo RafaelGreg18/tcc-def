@@ -25,6 +25,6 @@ for i in {1..3}; do
   #participantsxperformancexcost
    for alpha in 0.1 0.3 1.0; do
     echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=200 participants-name='criticalpoint' dir-alpha=$alpha devices-profile-path='./utils/profile/Shufflenet_v2_x0_5.json' model-name='Shufflenet_v2_x0_5'"
+    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=200 participants-name='criticalpoint' is-critical=true dir-alpha=$alpha"
   done
 done
