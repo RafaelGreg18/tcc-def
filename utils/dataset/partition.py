@@ -238,7 +238,7 @@ class DatasetFactory:
                     partition_by="label",
                     alpha=alpha,
                     seed=seed,
-                    min_partition_size=0,
+                    min_partition_size=1,
                 )
                 fds = FederatedDataset(
                     dataset=dataset_id,
@@ -298,7 +298,7 @@ class DatasetFactory:
                     partition_by="label",
                     alpha=alpha,
                     seed=seed,
-                    min_partition_size=0,
+                    min_partition_size=1,
                 )
                 fds = FederatedDataset(
                     dataset=dataset_id,

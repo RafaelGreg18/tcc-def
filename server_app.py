@@ -46,8 +46,8 @@ def server_fn(context: Context):
 
 
 # Limit the number of threads used for intra-op parallelism
-torch.set_num_threads(4) #4 threads in dl28 machine achieves the same performance with resource limitation
+#torch.set_num_threads(4) #4 threads in dl28 machine achieves the same performance with resource limitation
 # Limit the number of threads used for inter-op parallelism (e.g., for parallel calls to different operators)
-torch.set_num_interop_threads(2) #2 threads in dl28 machine achieves the same performance with resource limitation
+#torch.set_num_interop_threads(2) #2 threads in dl28 machine achieves the same performance with resource limitation
 
 app = ServerApp(server_fn=server_fn)
