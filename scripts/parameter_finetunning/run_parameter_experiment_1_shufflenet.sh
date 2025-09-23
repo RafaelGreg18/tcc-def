@@ -8,8 +8,11 @@ fi
 
 export CUDA_VISIBLE_DEVICES=$1
 
+# Goes to python dir
+cd "../../"
+
 # Run each configuration 3 times
-for i in {1..1}; do
+for i in {1..3}; do
   echo "Seed $i"
   # criar modelo
   echo "Criando modelo"
@@ -22,6 +25,6 @@ for i in {1..1}; do
   #participantsxperformancexcost
    for alpha in 0.1 0.3 1.0; do
     echo "Alpha $alpha"
-    flwr run . gpu-sim-lrc --run-config="seed=$i num-rounds=150 participants-name='criticalfl' dir-alpha=$alpha"
+    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=200 participants-name='criticalpoint' dir-alpha=$alpha devices-profile-path='./utils/profile/Shufflenet_v2_x0_5.json' model-name='Shufflenet_v2_x0_5'"
   done
 done
