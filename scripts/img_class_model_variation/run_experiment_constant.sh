@@ -12,7 +12,7 @@ export CUDA_VISIBLE_DEVICES=$1
 cd "../../"
 
 # Run each configuration 3 times
-for i in {1..3}; do
+for i in {1..5}; do
   echo "Seed $i"
   # criar modelo
   echo "Criando modelo"
@@ -22,9 +22,8 @@ for i in {1..3}; do
   echo "Criando perfis"
   python gen_sim_profile.py --seed $i
 
-  #participantsxperformancexcost
-   for alpha in 0.1 0.3 1.0; do
+  for alpha in 0.1 0.3 1.0; do
     echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=200 participants-name='criticalpoint' is-critical=true dir-alpha=$alpha"
+    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 dir-alpha=$alpha"
   done
 done
