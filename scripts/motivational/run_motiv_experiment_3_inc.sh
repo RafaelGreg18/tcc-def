@@ -8,6 +8,9 @@ fi
 
 export CUDA_VISIBLE_DEVICES=$1
 
+# Goes to python dir
+cd "../../"
+
 for i in {1..3}; do
   echo "Seed $i"
   # criar modelo
