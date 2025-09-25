@@ -12,6 +12,7 @@ from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
+from server.strategy.fedavg_random_hetaaff import FedAvgRandomHETAAFF
 from server.strategy.fedavg_random_recombination import FedAvgRandomRecombination
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
@@ -257,6 +258,19 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
                                            on_fit_config_fn=on_fit_config_fn,
                                            on_eval_config_fn=on_eval_config_fn,
                                            evaluate_fn=evaluate_fn)
+            elif participants_name == "hetaaff":
+                strategy = FedAvgRandomHETAAFF(repr="HETAAFF",
+                                               num_clients=num_clients,
+                                               profiles=profiles,
+                                               num_participants=num_participants,
+                                               num_evaluators=num_evaluators,
+                                               context=context,
+                                               initial_parameters=initial_parameters,
+                                               fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+                                               evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+                                               on_fit_config_fn=on_fit_config_fn,
+                                               on_eval_config_fn=on_eval_config_fn,
+                                               evaluate_fn=evaluate_fn)
             elif participants_name == "recombination":
                 strategy = FedAvgRandomRecombination(repr="FedAvgRandomRecombination",
                                                      num_clients=num_clients,

@@ -17,6 +17,9 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.initial_num_participants = self.num_participants
+        self.max_participants = int(self.num_clients * self.context.run_config["max-participants-fraction"])
+        self.min_participants = int(
+            self.initial_num_participants * self.context.run_config["min-participants-fraction"])
 
         self.Norms = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.Window = 10
@@ -46,10 +49,10 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
 
     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
         if self.is_cp:
-            max_participants = min(num_available_clients, int(self.num_clients * 0.75))
+            max_participants = min(num_available_clients, self.max_participants)
             self.num_participants = min(max_participants, self.num_participants * 2)
         else:
-            self.num_participants = max(self.initial_num_participants, self.num_participants // 2)
+            self.num_participants = max(self.min_participants, self.num_participants // 2)
 
         return self.num_participants, self.num_participants
 
