@@ -49,11 +49,11 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-#model-name = "Shufflenet_v2_x0_5"
-model-name = "simplecnn"
+model-name = "Shufflenet_v2_x0_5"
+#model-name = "simplecnn"
 # shape
-input-shape = "(3, 32, 32)"
-#input-shape = "(3,224,224)"
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
@@ -104,6 +104,15 @@ cp=25
 #Critical
 is-critical = false
 fgn-thresh = 0.01
+
+#Aff
+initial-window-size = 2
+max-window-size = 100
+min-window-size = 2
+aff-thresh = 0.01
+regression-degree = 1
+max-participants-fraction = 0.75
+min-participants-fraction = 0.75
 
 #Recombination
 mult-factor = 1

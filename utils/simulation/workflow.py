@@ -7,6 +7,7 @@ from flwr.common import Context, ndarrays_to_parameters, Metrics, Parameters, Me
 from flwr.server import ServerConfig, Server, SimpleClientManager, ServerAppComponents
 from torch.utils.data import DataLoader
 
+from server.strategy.fedavg_random_aff import FedAvgRandomAFF
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
@@ -243,6 +244,19 @@ def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_a
                                                   on_fit_config_fn=on_fit_config_fn,
                                                   on_eval_config_fn=on_eval_config_fn,
                                                   evaluate_fn=evaluate_fn)
+            elif participants_name == "aff":
+                strategy = FedAvgRandomAFF(repr="AFF",
+                                           num_clients=num_clients,
+                                           profiles=profiles,
+                                           num_participants=num_participants,
+                                           num_evaluators=num_evaluators,
+                                           context=context,
+                                           initial_parameters=initial_parameters,
+                                           fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+                                           evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+                                           on_fit_config_fn=on_fit_config_fn,
+                                           on_eval_config_fn=on_eval_config_fn,
+                                           evaluate_fn=evaluate_fn)
             elif participants_name == "recombination":
                 strategy = FedAvgRandomRecombination(repr="FedAvgRandomRecombination",
                                                      num_clients=num_clients,

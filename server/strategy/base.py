@@ -302,7 +302,8 @@ class BaseStrategy(Strategy):
                       "total_ceq": sum(cids_carbon_footprint.values()),
                       "num_expired_thresh": num_expired_thresh,
                       "num_depleted": num_depleted,
-                      "num_transmited_bytes": num_transmited_bytes
+                      "num_transmited_bytes": num_transmited_bytes,
+                      "num_participants": self.num_participants
                       }
         # Insert into local dictionary
         self.system_metrics_to_save[server_round] = my_results
