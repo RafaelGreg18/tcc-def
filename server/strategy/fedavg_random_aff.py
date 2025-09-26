@@ -171,9 +171,6 @@ class FedAvgRandomAFF(FedAvgRandomConstant):
     def fit_polynomial_regression(self) -> None:
         self.poly_features = PolynomialFeatures(degree=self.degree)
 
-        # print(f"Rounds {len(self.rounds[-self.current_window_size:])} Accuracies: {len(self.accuracies[-self.current_window_size:])}")
-        # exit(-1)
-
         X_poly = self.poly_features.fit_transform(
             np.array(self.rounds[-self.current_window_size:]).reshape(-1, 1)
         )

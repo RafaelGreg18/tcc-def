@@ -232,6 +232,7 @@ class FedAvgOortAFF(FedAvgOortConstant):
         X_poly = self.poly_features.fit_transform(
             np.array(self.rounds[-self.current_window_size:]).reshape(-1, 1)
         )
+
         self.model = LinearRegression().fit(X_poly, self.accuracies[-self.current_window_size:])
 
     def compute_trend_metrics(self) -> (float, float):
@@ -240,9 +241,14 @@ class FedAvgOortAFF(FedAvgOortConstant):
         x_window_poly = self.poly_features.transform(x_window)
         predicted = self.model.predict(x_window_poly)
 
+        print(f"Acc: {self.accuracies[-self.current_window_size:]} Pred: {predicted}")
+
         derivative = np.mean(np.diff(predicted))
-        slope = self.model.coef_[1]
+        slope = float(self.model.coef_[1]) if self.model.coef_.shape[0] > 1 else 0.0
         slope_deg = np.degrees(np.arctan(slope))
+
+        print(f"Coef: {self.model.coef_[1]}")
+        print(f"Slope: {slope} Deg: {slope_deg}")
 
         return derivative, slope_deg
 
