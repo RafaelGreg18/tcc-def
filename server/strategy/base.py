@@ -230,8 +230,14 @@ class BaseStrategy(Strategy):
                                                                                      max_comm_round_time,
                                                                                      self.use_battery)
 
+        for cid in selected_cids_training_joules_consumption:
+            self.profiles[cid]["comm_round_energy"] = selected_cids_training_joules_consumption[cid]
+
         selected_cids_training_carbon_footprint = get_cid_training_carbon_footprint(self.profiles,
                                                                                     selected_cids_training_joules_consumption)
+
+        for cid in selected_cids_training_carbon_footprint:
+            self.profiles[cid]["comm_round_carbon"] = selected_cids_training_carbon_footprint[cid]
 
         # Get for each unselected client energy and carbon footprint
         unselected_cids = []

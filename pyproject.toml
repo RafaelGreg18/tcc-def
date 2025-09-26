@@ -119,6 +119,15 @@ hetaaff-thresh = 0.01
 hetaaff-reduce-weight = 0.4
 hetaaff-increase-weight = 0.4
 
+#Oort
+exploration-factor = 0.9
+step-window = 5
+pacer-step = 60
+penalty = 2.0
+cut-off = 0.95
+blacklist-num = 1000
+desired-duration = 0
+
 #Recombination
 mult-factor = 1
 prioritize-sim = true
