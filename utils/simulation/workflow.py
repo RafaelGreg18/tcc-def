@@ -7,6 +7,7 @@ from flwr.common import Context, ndarrays_to_parameters, Metrics
 from flwr.server import ServerConfig, Server, SimpleClientManager, ServerAppComponents
 from torch.utils.data import DataLoader
 
+from server.strategy.fedavg_divfl_constant import FedAvgDivflConstant
 from server.strategy.fedavg_oort_aff import FedAvgOortAFF
 from server.strategy.fedavg_oort_constant import FedAvgOortConstant
 from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
@@ -199,6 +200,8 @@ STRATEGY_REGISTRY = {
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
     ("fedavg", "oort", "aff"): FedAvgOortAFF,
     ("fedavg", "oort", "hetaaff"): FedAvgOortHETAAFF,
+
+    ("fedavg", "divfl", "constant"): FedAvgDivflConstant,
 }
 
 
