@@ -56,6 +56,8 @@ class FedAvgOortConstant(BaseStrategy):
             self.profiles[cid]['comm_round_carbon'] = 0
 
     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
+        self.num_participants = min(num_available_clients, self.num_participants)
+
         return self.num_participants, self.num_participants
 
     def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:

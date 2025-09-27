@@ -68,3 +68,41 @@ def cka(X, Y):
         return cka_wide(X, Y)
     else:
         return cka_tall(X, Y)
+
+
+def compute_model_heterogeneity(client_models):
+    if len(client_models) < 2:
+        return 0.0
+
+    mats = []
+    for params in client_models:
+        flat = np.concatenate([arr.flatten() for arr in params])
+        mats.append(flat.reshape(1, -1))
+
+    n = len(mats)
+    sims = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            try:
+                X, Y = mats[i].T, mats[j].T
+                sim = cka(X, Y)
+                if np.isnan(sim) or np.isinf(sim):
+                    corr = np.corrcoef(mats[i].flatten(), mats[j].flatten())[0, 1]
+                    sim = float(abs(corr)) if not np.isnan(corr) else 0.0
+                else:
+                    sim = float(sim)
+                sims.append(sim)
+            except Exception:
+                try:
+                    corr = np.corrcoef(mats[i].flatten(), mats[j].flatten())[0, 1]
+                    sim = float(abs(corr)) if not np.isnan(corr) else 0.0
+                    sims.append(sim)
+                except Exception:
+                    sims.append(0.0)
+
+    if not sims:
+        return 0.0
+
+    avg_sim = float(np.mean(sims))
+    het = 1.0 - avg_sim
+    return float(np.clip(het, 0.0, 1.0))

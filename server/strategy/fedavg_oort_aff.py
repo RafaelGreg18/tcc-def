@@ -33,14 +33,6 @@ class FedAvgOortAFF(FedAvgOortConstant):
         self.slope_degree = None
         self.previous_negative_value = self.num_participants
 
-    def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
-        self.num_participants = min(num_available_clients, self.num_participants)
-
-        return self.num_participants, self.num_participants
-
-    def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:
-        return self.num_evaluators, self.num_participants  # num_eval > num_part
-
     def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
         config = {}
         if self.on_fit_config_fn is not None:

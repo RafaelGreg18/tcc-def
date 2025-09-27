@@ -1,16 +1,15 @@
-import json
 import math
-import random
+from typing import Optional
+
+import math
 from typing import Optional
 
 import numpy as np
 from flwr.common import FitIns, Parameters, Scalar, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
 
 from server.strategy.fedavg_oort_aff import FedAvgOortAFF
-from utils.strategy.cka import cka
+from utils.strategy.cka import compute_model_heterogeneity
 
 
 class FedAvgOortHETAAFF(FedAvgOortAFF):
@@ -22,14 +21,6 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
         self.het_reduce_weight = float(np.clip(het_reduce_weight, 0.0, 1.0))
         self.het_increase_weight = float(np.clip(het_increase_weight, 0.0, 1.0))
         self.heterogeneity = None
-
-    def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
-        self.num_participants = min(num_available_clients, self.num_participants)
-
-        return self.num_participants, self.num_participants
-
-    def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:
-        return self.num_evaluators, self.num_participants  # num_eval > num_part
 
     def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
         config = {}
@@ -75,18 +66,19 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
         return [(client, fit_ins) for client in clients]
 
     def _do_aggregate_fit(self, server_round, results, failures) -> tuple[Optional[Parameters], dict[str, Scalar]]:
-        parameters_aggregated, metrics_aggregated = super()._do_aggregate_fit(server_round=server_round, results=results, failures=failures)
+        parameters_aggregated, metrics_aggregated = super()._do_aggregate_fit(server_round=server_round,
+                                                                              results=results, failures=failures)
 
         if server_round >= 2 and len(results) > 1:
             client_models = [parameters_to_ndarrays(fit_res.parameters) for _, fit_res in results]
-            self.heterogeneity = self.compute_model_heterogeneity(client_models)
+            self.heterogeneity = compute_model_heterogeneity(client_models)
 
         return parameters_aggregated, metrics_aggregated
 
     def update_hetaaff(self) -> int:
         if len(self.accuracies) >= self.current_window_size:
             if self.heterogeneity is not None:
-                 self.heterogeneity = float(np.clip(self.heterogeneity, 0.0, 1.0))
+                self.heterogeneity = float(np.clip(self.heterogeneity, 0.0, 1.0))
 
             self.fit_polynomial_regression()
             derivative, slope_deg = self.compute_trend_metrics()
@@ -103,7 +95,6 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
 
             if direction == "Decreasing":
                 self.previous_negative_value = self.num_participants
-
 
             print(f"Direction: {direction} Window Size: {self.current_window_size}")
 
@@ -138,40 +129,3 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
         new_value = max(self.min_participants, min(self.max_participants, new_CP))
 
         return int(new_value)
-
-    def compute_model_heterogeneity(self, client_models):
-        if len(client_models) < 2:
-            return 0.0
-
-        mats = []
-        for params in client_models:
-            flat = np.concatenate([arr.flatten() for arr in params])
-            mats.append(flat.reshape(1, -1))
-
-        n = len(mats)
-        sims = []
-        for i in range(n):
-            for j in range(i + 1, n):
-                try:
-                    X, Y = mats[i].T, mats[j].T
-                    sim = cka(X, Y)
-                    if np.isnan(sim) or np.isinf(sim):
-                        corr = np.corrcoef(mats[i].flatten(), mats[j].flatten())[0, 1]
-                        sim = float(abs(corr)) if not np.isnan(corr) else 0.0
-                    else:
-                        sim = float(sim)
-                    sims.append(sim)
-                except Exception:
-                    try:
-                        corr = np.corrcoef(mats[i].flatten(), mats[j].flatten())[0, 1]
-                        sim = float(abs(corr)) if not np.isnan(corr) else 0.0
-                        sims.append(sim)
-                    except Exception:
-                        sims.append(0.0)
-
-        if not sims:
-            return 0.0
-
-        avg_sim = float(np.mean(sims))
-        het = 1.0 - avg_sim
-        return float(np.clip(het, 0.0, 1.0))
