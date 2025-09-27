@@ -1,6 +1,5 @@
 import json
 import math
-import random
 from typing import Optional
 
 import numpy as np
@@ -9,10 +8,11 @@ from flwr.server.client_proxy import ClientProxy
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
-from server.strategy.fedavg_oort_constant import FedAvgOortConstant
+from server.strategy.fedavg_divfl_constant import FedAvgDivflConstant
+from utils.strategy.divfl import submod_sampling
 
 
-class FedAvgOortAFF(FedAvgOortConstant):
+class FedAvgDivflAFF(FedAvgDivflConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.initial_num_participants = self.num_participants
@@ -40,11 +40,6 @@ class FedAvgOortAFF(FedAvgOortConstant):
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
 
-        # Cid utility map
-        cids_utility = []
-        for cid in self.available_cids:
-            cids_utility.append((self.profiles[cid]['utility'], cid))
-
         # Sample clients
         if 2 <= server_round <= 3:
             self.rounds.append(server_round)
@@ -63,7 +58,9 @@ class FedAvgOortAFF(FedAvgOortConstant):
             )
 
         # Oort selection
-        selected_cids = self.sample_fit(client_manager, sample_size, cids_utility)
+        selected_cids = submod_sampling(self.gradients, sample_size, client_manager.num_available(),
+                                        stochastic=True)
+
         selected_flwr_cids = []
         for cid in selected_cids:
             for key, value in self.cid_map.items():
@@ -102,99 +99,6 @@ class FedAvgOortAFF(FedAvgOortConstant):
             json.dump(self.performance_metrics_to_save, json_file, indent=2)
 
         return loss, metrics
-
-    def sample_fit(self, client_manager, sample_size, available_cids):
-        selected_clients = []
-
-        # Exploitation
-        exploited_clients_count = max(
-            math.ceil((1.0 - self.exploration_factor) * sample_size),
-            sample_size - len(self.unexplored_clients),
-        )
-
-        available_cids.sort(key=lambda x: x[0], reverse=True)
-
-        sorted_by_utility = [cid for utility, cid in available_cids]
-
-        # Calculate cut-off utility
-        cut_off_util = (
-                self.profiles[sorted_by_utility[exploited_clients_count - 1]]['utility'] * self.cut_off
-        )
-
-        # Include clients with utilities higher than the cut-off
-        exploited_clients = []
-        for client_id in sorted_by_utility:
-            if (
-                    self.profiles[client_id]['utility'] > cut_off_util
-                    and client_id not in self.blacklist
-            ):
-                exploited_clients.append(client_id)
-
-        # Sample clients with their utilities
-        total_utility = float(
-            sum(self.profiles[client_id]['utility'] for client_id in exploited_clients)
-        )
-
-        probabilities = [
-            self.profiles[client_id]['utility'] / total_utility
-            for client_id in exploited_clients
-        ]
-
-        if len(probabilities) > 0 and exploited_clients_count > 0:
-            selected_clients = np.random.choice(
-                exploited_clients,
-                min(len(exploited_clients), exploited_clients_count),
-                p=probabilities,
-                replace=False,
-            )
-            selected_clients = selected_clients.tolist()
-
-        last_index = (
-            sorted_by_utility.index(exploited_clients[-1])
-            if exploited_clients
-            else 0
-        )
-
-        # Exploration
-        # Select unexplored clients randomly
-        unexplored_size = len(self.unexplored_clients)
-        if unexplored_size > 0:
-            selected_unexplore_clients = random.sample(
-                self.unexplored_clients, min(unexplored_size, sample_size - len(selected_clients))
-            )
-        else:
-            selected_unexplore_clients = []
-
-        self.explored_clients += selected_unexplore_clients
-
-        for client_id in selected_unexplore_clients:
-            self.unexplored_clients.remove(client_id)
-
-        selected_clients += selected_unexplore_clients
-
-        for client in selected_clients:
-            self.profiles[client]['times_selected'] += 1
-
-        return selected_clients
-
-    def calc_client_util(self, cid, statistical_utility, server_round):
-        """Calculate the client utility."""
-        # Explored client
-        if self.profiles[cid]['last_round'] == 0:
-            self.profiles[cid]['last_round'] = server_round
-
-        client_utility = statistical_utility + math.sqrt(
-            0.1 * math.log(server_round) / self.profiles[cid]['last_round']
-        )
-
-        if self.desired_duration < self.profiles[cid]['comm_round_time']:
-            global_utility = (self.desired_duration / self.profiles[cid]['comm_round_time']) ** self.penalty
-            client_utility *= global_utility
-
-        # Update exploited client
-        self.profiles[cid]['last_round'] = server_round
-
-        return client_utility
 
     def update_aff(self) -> int:
         if len(self.accuracies) >= self.current_window_size:

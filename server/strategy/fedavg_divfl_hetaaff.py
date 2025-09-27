@@ -1,18 +1,16 @@
 import math
 from typing import Optional
 
-import math
-from typing import Optional
-
 import numpy as np
 from flwr.common import FitIns, Parameters, Scalar, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 
-from server.strategy.fedavg_oort_aff import FedAvgOortAFF
+from server.strategy.fedavg_divfl_aff import FedAvgDivflAFF
 from utils.strategy.cka import compute_model_heterogeneity
+from utils.strategy.divfl import submod_sampling
 
 
-class FedAvgOortHETAAFF(FedAvgOortAFF):
+class FedAvgDivflHETAAFF(FedAvgDivflAFF):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.threshold = self.context.run_config["hetaaff-thresh"]
@@ -28,11 +26,6 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
         fit_ins = FitIns(parameters, config)
-
-        # Cid utility map
-        cids_utility = []
-        for cid in self.available_cids:
-            cids_utility.append((self.profiles[cid]['utility'], cid))
 
         # Sample clients
         if 2 <= server_round <= 3:
@@ -51,8 +44,10 @@ class FedAvgOortHETAAFF(FedAvgOortAFF):
                 client_manager.num_available()
             )
 
-        # Oort selection
-        selected_cids = self.sample_fit(client_manager, sample_size, cids_utility)
+        # Client selection
+        selected_cids = submod_sampling(self.gradients, sample_size, client_manager.num_available(),
+                                        stochastic=True)
+
         selected_flwr_cids = []
         for cid in selected_cids:
             for key, value in self.cid_map.items():

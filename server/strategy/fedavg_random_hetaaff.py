@@ -161,8 +161,6 @@ class FedAvgRandomHETAAFF(FedAvgRandomAFF):
                 self.previous_negative_value = self.num_participants
 
 
-            print(f"Direction: {direction} Window Size: {self.current_window_size}")
-
             self.update_window_size(direction)
             self.num_participants = self.new_hetaaff_participants_value()
 
