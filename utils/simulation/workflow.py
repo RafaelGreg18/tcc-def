@@ -8,6 +8,7 @@ from flwr.server import ServerConfig, Server, SimpleClientManager, ServerAppComp
 from torch.utils.data import DataLoader
 
 from server.strategy.fedavg_divfl_constant import FedAvgDivflConstant
+from server.strategy.fedavg_divfl_critical import FedAvgDivflCriticalFL
 from server.strategy.fedavg_oort_aff import FedAvgOortAFF
 from server.strategy.fedavg_oort_constant import FedAvgOortConstant
 from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
@@ -202,6 +203,7 @@ STRATEGY_REGISTRY = {
     ("fedavg", "oort", "hetaaff"): FedAvgOortHETAAFF,
 
     ("fedavg", "divfl", "constant"): FedAvgDivflConstant,
+    ("fedavg", "divfl", "criticalfl"): FedAvgDivflCriticalFL,
 }
 
 
