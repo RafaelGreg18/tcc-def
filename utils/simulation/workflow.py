@@ -1,9 +1,9 @@
 import ast
 import json
-from typing import Dict, Any, List, Tuple, Callable
+from typing import Dict, Any, List, Tuple
 
 import torch
-from flwr.common import Context, ndarrays_to_parameters, Metrics, Parameters, MetricsAggregationFn
+from flwr.common import Context, ndarrays_to_parameters, Metrics
 from flwr.server import ServerConfig, Server, SimpleClientManager, ServerAppComponents
 from torch.utils.data import DataLoader
 
@@ -184,166 +184,66 @@ def get_evaluate_metrics_aggregation_fn():
     return handle_eval_metrics
 
 
-def get_strategy(context: Context, initial_parameters: Parameters, fit_metrics_aggregation_fn: MetricsAggregationFn,
-                 evaluate_metrics_aggregation_fn: MetricsAggregationFn, on_fit_config_fn: Callable,
-                 on_eval_config_fn: Callable, evaluate_fn: Callable, proxy_loader: DataLoader):
+# --- Registry com o mapeamento das estratégias ---
+STRATEGY_REGISTRY = {
+    # Exemplo: (aggregation, selection, participants): StrategyClass
+    ("fedavg", "random", "constant"): FedAvgRandomConstant,
+    ("fedavg", "random", "twophase"): FedAvgRandomConstantTwoPhase,
+    ("fedavg", "random", "criticalpoint"): FedAvgRandomCPEval,
+    ("fedavg", "random", "criticalfl"): FedAvgRandomCriticalFL,
+    ("fedavg", "random", "aff"): FedAvgRandomAFF,
+    ("fedavg", "random", "hetaaff"): FedAvgRandomHETAAFF,
+    ("fedavg", "random", "recombination"): FedAvgRandomRecombination,
+
+    ("fedavg", "oort", "constant"): FedAvgOortConstant,
+    ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
+    ("fedavg", "oort", "aff"): FedAvgOortAFF,
+    ("fedavg", "oort", "hetaaff"): FedAvgOortHETAAFF,
+}
+
+
+# --- Factory para instanciar a estratégia ---
+class StrategyFactory:
+    def __init__(self, registry=None):
+        self.registry = registry or STRATEGY_REGISTRY
+
+    def create(self, aggregation, selection, participants, **kwargs):
+        key = (aggregation, selection, participants)
+        if key not in self.registry:
+            raise ValueError(f"Estratégia não encontrada para {key}")
+        strategy_cls = self.registry[key]
+        return strategy_cls(**kwargs)
+
+
+# --- Função get_strategy enxuta usando a factory ---
+def get_strategy(context, initial_parameters, fit_metrics_aggregation_fn,
+                 evaluate_metrics_aggregation_fn, on_fit_config_fn,
+                 on_eval_config_fn, evaluate_fn, proxy_loader):
     participants_name = context.run_config["participants-name"]
     selection_name = context.run_config["selection-name"]
     aggregation_name = context.run_config["aggregation-name"]
-    num_clients = int(context.run_config["num-clients"])
-    num_participants = int(context.run_config["num-participants"])
-    num_evaluators = int(context.run_config["num-evaluators"])
-    profiles = get_profiles(context)
 
-    if aggregation_name == "fedavg":
-        if selection_name == "random":
-            if participants_name == "constant":
-                strategy = FedAvgRandomConstant(repr="FedAvgRandomConstant",
-                                                num_clients=num_clients,
-                                                profiles=profiles,
-                                                num_participants=num_participants,
-                                                num_evaluators=num_evaluators,
-                                                context=context,
-                                                initial_parameters=initial_parameters,
-                                                fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                                evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                                on_fit_config_fn=on_fit_config_fn,
-                                                on_eval_config_fn=on_eval_config_fn,
-                                                evaluate_fn=evaluate_fn)
-            elif participants_name == "twophase":
-                strategy = FedAvgRandomConstantTwoPhase(repr="FedAvgRandomConstantTwoPhase",
-                                                        num_clients=num_clients,
-                                                        profiles=profiles,
-                                                        num_participants=num_participants,
-                                                        num_evaluators=num_evaluators,
-                                                        context=context,
-                                                        initial_parameters=initial_parameters,
-                                                        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                                        evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                                        on_fit_config_fn=on_fit_config_fn,
-                                                        on_eval_config_fn=on_eval_config_fn,
-                                                        evaluate_fn=evaluate_fn)
-            elif participants_name == "criticalpoint":
-                strategy = FedAvgRandomCPEval(repr="CriticalPoint",
-                                              num_clients=num_clients,
-                                              profiles=profiles,
-                                              num_participants=num_participants,
-                                              num_evaluators=num_evaluators,
-                                              context=context,
-                                              initial_parameters=initial_parameters,
-                                              fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                              evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                              on_fit_config_fn=on_fit_config_fn,
-                                              on_eval_config_fn=on_eval_config_fn,
-                                              evaluate_fn=evaluate_fn)
-            elif participants_name == "criticalfl":
-                strategy = FedAvgRandomCriticalFL(repr="CriticalFL",
-                                                  num_clients=num_clients,
-                                                  profiles=profiles,
-                                                  num_participants=num_participants,
-                                                  num_evaluators=num_evaluators,
-                                                  context=context,
-                                                  initial_parameters=initial_parameters,
-                                                  fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                                  evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                                  on_fit_config_fn=on_fit_config_fn,
-                                                  on_eval_config_fn=on_eval_config_fn,
-                                                  evaluate_fn=evaluate_fn)
-            elif participants_name == "aff":
-                strategy = FedAvgRandomAFF(repr="AFF",
-                                           num_clients=num_clients,
-                                           profiles=profiles,
-                                           num_participants=num_participants,
-                                           num_evaluators=num_evaluators,
-                                           context=context,
-                                           initial_parameters=initial_parameters,
-                                           fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                           evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                           on_fit_config_fn=on_fit_config_fn,
-                                           on_eval_config_fn=on_eval_config_fn,
-                                           evaluate_fn=evaluate_fn)
-            elif participants_name == "hetaaff":
-                strategy = FedAvgRandomHETAAFF(repr="HETAAFF",
-                                               num_clients=num_clients,
-                                               profiles=profiles,
-                                               num_participants=num_participants,
-                                               num_evaluators=num_evaluators,
-                                               context=context,
-                                               initial_parameters=initial_parameters,
-                                               fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                               evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                               on_fit_config_fn=on_fit_config_fn,
-                                               on_eval_config_fn=on_eval_config_fn,
-                                               evaluate_fn=evaluate_fn)
-            elif participants_name == "recombination":
-                strategy = FedAvgRandomRecombination(repr="FedAvgRandomRecombination",
-                                                     num_clients=num_clients,
-                                                     profiles=profiles,
-                                                     num_participants=num_participants,
-                                                     num_evaluators=num_evaluators,
-                                                     context=context,
-                                                     initial_parameters=initial_parameters,
-                                                     fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                                     evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                                     on_fit_config_fn=on_fit_config_fn,
-                                                     on_eval_config_fn=on_eval_config_fn,
-                                                     evaluate_fn=evaluate_fn,
-                                                     proxy_loader=proxy_loader)
-        elif selection_name == "oort":
-            if participants_name == "constant":
-                strategy = FedAvgOortConstant(repr="Constant",
-                                              num_clients=num_clients,
-                                              profiles=profiles,
-                                              num_participants=num_participants,
-                                              num_evaluators=num_evaluators,
-                                              context=context,
-                                              initial_parameters=initial_parameters,
-                                              fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                              evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                              on_fit_config_fn=on_fit_config_fn,
-                                              on_eval_config_fn=on_eval_config_fn,
-                                              evaluate_fn=evaluate_fn)
-            elif participants_name == "criticalfl":
-                strategy = FedAvgOortCriticalFL(repr="CriticalFL",
-                                                num_clients=num_clients,
-                                                profiles=profiles,
-                                                num_participants=num_participants,
-                                                num_evaluators=num_evaluators,
-                                                context=context,
-                                                initial_parameters=initial_parameters,
-                                                fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                                evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                                on_fit_config_fn=on_fit_config_fn,
-                                                on_eval_config_fn=on_eval_config_fn,
-                                                evaluate_fn=evaluate_fn)
-            elif participants_name == "aff":
-                strategy = FedAvgOortAFF(repr="AFF",
-                                         num_clients=num_clients,
-                                         profiles=profiles,
-                                         num_participants=num_participants,
-                                         num_evaluators=num_evaluators,
-                                         context=context,
-                                         initial_parameters=initial_parameters,
-                                         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                         on_fit_config_fn=on_fit_config_fn,
-                                         on_eval_config_fn=on_eval_config_fn,
-                                         evaluate_fn=evaluate_fn)
-            elif participants_name == "hetaaff":
-                strategy = FedAvgOortHETAAFF(repr="HETAAFF",
-                                             num_clients=num_clients,
-                                             profiles=profiles,
-                                             num_participants=num_participants,
-                                             num_evaluators=num_evaluators,
-                                             context=context,
-                                             initial_parameters=initial_parameters,
-                                             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                                             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                                             on_fit_config_fn=on_fit_config_fn,
-                                             on_eval_config_fn=on_eval_config_fn,
-                                             evaluate_fn=evaluate_fn)
+    common_args = dict(
+        repr=participants_name,
+        num_clients=int(context.run_config["num-clients"]),
+        profiles=get_profiles(context),
+        num_participants=int(context.run_config["num-participants"]),
+        num_evaluators=int(context.run_config["num-evaluators"]),
+        context=context,
+        initial_parameters=initial_parameters,
+        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+        evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+        on_fit_config_fn=on_fit_config_fn,
+        on_eval_config_fn=on_eval_config_fn,
+        evaluate_fn=evaluate_fn,
+    )
 
-    return strategy
+    # caso especial que exige proxy_loader
+    if (aggregation_name, selection_name, participants_name) == ("fedavg", "random", "recombination"):
+        common_args["proxy_loader"] = proxy_loader
+
+    factory = StrategyFactory()
+    return factory.create(aggregation_name, selection_name, participants_name, **common_args)
 
 
 def get_server_app_components(context, strategy):
