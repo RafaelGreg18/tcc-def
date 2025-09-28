@@ -132,6 +132,8 @@ desired-duration = 0
 mult-factor = 1
 prioritize-sim = true
 
+# fedprox
+proximal-mu = 2.0
 
 [tool.flwr.federations]
 default = "local-simulation"

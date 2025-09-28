@@ -3,6 +3,7 @@ from flwr.common import Context
 
 from client.base import BaseClient
 from client.critical import CriticalClient
+from client.prox import BaseProxClient
 from utils.simulation.config import set_seed
 from utils.simulation.workflow import get_user_dataloader, get_initial_model
 
@@ -20,13 +21,23 @@ def client_fn(context: Context):
     dataset_id = context.run_config["hugginface-id"]
     # 5. client
     is_critical = context.run_config["is-critical"]
+    # 6. aggregation type
+    agg = context.run_config["aggregation-name"]
 
-    if is_critical:
-        return CriticalClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+    if agg == "fedavg":
+        if is_critical:
+            return CriticalClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                                  dataset_id=dataset_id).to_client()
+        else:
+            return BaseClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
                               dataset_id=dataset_id).to_client()
-    else:
-        return BaseClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
-                          dataset_id=dataset_id).to_client()
+    elif agg == "fedprox":
+        if is_critical:
+            pass
+        else:
+            proximal_mu = context.run_config["proximal-mu"]
+            return BaseProxClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                                  dataset_id=dataset_id, proximal_mu=proximal_mu).to_client()
 
 
 app = ClientApp(client_fn)
