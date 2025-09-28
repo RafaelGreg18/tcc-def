@@ -4,6 +4,7 @@ from flwr.common import Context
 from client.base import BaseClient
 from client.critical import CriticalClient
 from client.prox import BaseProxClient
+from client.prox_critical import ProxCriticalClient
 from utils.simulation.config import set_seed
 from utils.simulation.workflow import get_user_dataloader, get_initial_model
 
@@ -32,10 +33,12 @@ def client_fn(context: Context):
             return BaseClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
                               dataset_id=dataset_id).to_client()
     elif agg == "fedprox":
+        proximal_mu = context.run_config["proximal-mu"]
         if is_critical:
-            pass
+            return ProxCriticalClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                                      dataset_id=dataset_id, proximal_mu=proximal_mu).to_client()
         else:
-            proximal_mu = context.run_config["proximal-mu"]
+
             return BaseProxClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
                                   dataset_id=dataset_id, proximal_mu=proximal_mu).to_client()
 
