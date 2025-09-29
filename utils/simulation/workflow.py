@@ -22,8 +22,10 @@ from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
 from server.strategy.fedavg_random_hetaaff import FedAvgRandomHETAAFF
 from server.strategy.fedavg_random_recombination import FedAvgRandomRecombination
+from server.strategy.fedprox_random_aff import FedProxRandomAFF
 from server.strategy.fedprox_random_constant import FedProxRandomConstant
 from server.strategy.fedprox_random_criticalfl import FedProxRandomCriticalFL
+from server.strategy.fedprox_random_hetaaff import FedProxRandomHETAAFF
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
 from utils.simulation.config import ConfigRepository
@@ -213,6 +215,8 @@ STRATEGY_REGISTRY = {
 
     ("fedprox", "random", "constant"): FedProxRandomConstant,
     ("fedprox", "random", "criticalfl"): FedProxRandomCriticalFL,
+    ("fedprox", "random", "aff"): FedProxRandomAFF,
+    ("fedprox", "random", "hetaaff"): FedProxRandomHETAAFF,
 }
 
 
