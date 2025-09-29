@@ -6,6 +6,7 @@ from flwr.common import Context
 from client.base import BaseClient
 from client.critical import CriticalClient
 from client.feddyn import BaseFedDynClient
+from client.feddyn_critical import FedDynCriticalClient
 from client.prox import BaseProxClient
 from client.prox_critical import ProxCriticalClient
 from utils.simulation.config import set_seed
@@ -50,10 +51,11 @@ def client_fn(context: Context):
         alpha = context.run_config["alpha-coef"]
 
         if is_critical:
-            pass
+            return FedDynCriticalClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
+                                        dataset_id=dataset_id, prev_grads=prev_grads, alpha=alpha).to_client()
         else:
             return BaseFedDynClient(cid=cid, flwr_cid=flwr_cid, model=model, dataloader=dataloader,
-                                  dataset_id=dataset_id, prev_grads=prev_grads, alpha=alpha).to_client()
+                                    dataset_id=dataset_id, prev_grads=prev_grads, alpha=alpha).to_client()
 
 
 app = ClientApp(client_fn)

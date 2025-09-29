@@ -1,18 +1,14 @@
-import datetime
 import json
-import os
-from logging import WARNING
 from typing import Optional
 
 import numpy as np
-from flwr.common import Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log, FitIns
+from flwr.common import Parameters, Scalar, parameters_to_ndarrays, FitIns
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.strategy.aggregate import aggregate
 
-from server.strategy.fedavg_random_constant import FedAvgRandomConstant
+from server.strategy.feddyn_random_constant import FedDynRandomConstant
 
 
-class FedAvgRandomCriticalFL(FedAvgRandomConstant):
+class FedDynRandomCriticalFL(FedDynRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.initial_num_participants = self.num_participants
@@ -26,25 +22,6 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
         self.new_fgn = 0
         self.thresh = self.context.run_config["fgn-thresh"]
         self.is_cp = True
-
-    def _do_initialization(self, client_manager):
-        current_date = datetime.datetime.now().strftime("%d-%m-%Y")
-        selection_name = self.context.run_config["selection-name"]
-        aggregation_name = self.context.run_config["aggregation-name"]
-        participants_name = self.context.run_config["participants-name"]
-        dataset_id = self.context.run_config["hugginface-id"].split('/')[-1]
-        seed = self.context.run_config["seed"]
-        dir = self.context.run_config["dir-alpha"]
-
-        output_dir = os.path.join("outputs", current_date,
-                                  f"{aggregation_name}_{selection_name}_{participants_name}_battery_{self.use_battery}_dataset_{dataset_id}_dir_{dir}_seed_{seed}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        self.model_performance_path = os.path.join(output_dir, "model_performance.json")
-        self.system_performance_path = os.path.join(output_dir, "system_performance.json")
-        self.fl_cli_state_path = os.path.join(output_dir, "client_state.json")
-
-        self.last_parameters = parameters_to_ndarrays(self.initial_parameters)
 
     def num_fit_clients(self, num_available_clients: int) -> tuple[int, int]:
         if self.is_cp:
@@ -78,28 +55,7 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
         return [(client, fit_ins) for client in clients]
 
     def _do_aggregate_fit(self, server_round, results, failures) -> tuple[Optional[Parameters], dict[str, Scalar]]:
-        """Aggregate fit results using weighted average."""
-        if not results:
-            return None, {}
-        # Do not aggregate if there are failures and failures are not accepted
-        if failures:
-            return None, {}
-
-        # Convert results
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-            for _, fit_res in results
-        ]
-        aggregated_ndarrays = aggregate(weights_results)
-        parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
-
-        # Aggregate custom metrics if aggregation fn was provided
-        metrics_aggregated = {}
-        if self.fit_metrics_aggregation_fn:
-            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
-            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-        elif server_round == 1:  # Only log this warning once
-            log(WARNING, "No fit_metrics_aggregation_fn provided")
+        parameters_aggregated, metrics_aggregated = super()._do_aggregate_fit(server_round, results, failures)
 
         if server_round % 2 == 0 and server_round > 5:
             avg_gn = metrics_aggregated["avg_gn"]
