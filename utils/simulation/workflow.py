@@ -17,6 +17,7 @@ from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
 from server.strategy.fedavg_oort_hetaaff import FedAvgOortHETAAFF
 from server.strategy.fedavg_random_aff import FedAvgRandomAFF
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
+from server.strategy.fedavg_random_constant_delayed import FedAvgRandomConstantDelayed
 from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
@@ -206,6 +207,7 @@ STRATEGY_REGISTRY = {
     ("fedavg", "random", "aff"): FedAvgRandomAFF,
     ("fedavg", "random", "hetaaff"): FedAvgRandomHETAAFF,
     ("fedavg", "random", "recombination"): FedAvgRandomRecombination,
+    ("fedavg", "random", "delayed"): FedAvgRandomConstantDelayed,
 
     ("fedavg", "oort", "constant"): FedAvgOortConstant,
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
@@ -284,8 +286,9 @@ def get_server_app_components(context, strategy):
 
 
 def get_profiles(context):
+    model_name = context.run_config["model-name"]
     profiles_path = context.run_config[
-                        "root-profiles-dir"] + "profiles.json"
+                        "root-profiles-dir"] + f"profiles_{model_name}.json"
     with open(profiles_path, "r") as file:
         profiles = json.load(file)
     profiles = {int(k): v for k, v in profiles.items()}
