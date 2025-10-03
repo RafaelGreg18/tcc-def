@@ -8,7 +8,6 @@ import numpy as np
 from flwr.common import Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log, FitIns
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy.aggregate import aggregate
-from scipy.interpolate import UnivariateSpline
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
 
@@ -126,7 +125,7 @@ class FedAvgRandomCriticalFL(FedAvgRandomConstant):
             self.old_fgn = max([np.mean(self.Norms[-self.Window - 1:-1]), 0.0000001])
             self.new_fgn = np.mean(self.Norms[-self.Window:])
             # update critical-period
-            delta_fgn = (self.new_fgn - self.old_fgn)/self.old_fgn
+            delta_fgn = (self.new_fgn - self.old_fgn) / self.old_fgn
             if delta_fgn >= self.thresh:
                 self.is_cp = True
             else:

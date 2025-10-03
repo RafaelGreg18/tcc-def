@@ -17,13 +17,20 @@ from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
 from server.strategy.fedavg_oort_hetaaff import FedAvgOortHETAAFF
 from server.strategy.fedavg_random_aff import FedAvgRandomAFF
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
+from server.strategy.fedavg_random_constant_delayed import FedAvgRandomConstantDelayed
 from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
 from server.strategy.fedavg_random_hetaaff import FedAvgRandomHETAAFF
 from server.strategy.fedavg_random_recombination import FedAvgRandomRecombination
+from server.strategy.feddyn_random_aff import FedDynRandomAFF
+from server.strategy.feddyn_random_constant import FedDynRandomConstant
+from server.strategy.feddyn_random_criticalfl import FedDynRandomCriticalFL
+from server.strategy.feddyn_random_hetaaff import FedDynRandomHETAAFF
+from server.strategy.fedprox_random_aff import FedProxRandomAFF
 from server.strategy.fedprox_random_constant import FedProxRandomConstant
 from server.strategy.fedprox_random_criticalfl import FedProxRandomCriticalFL
+from server.strategy.fedprox_random_hetaaff import FedProxRandomHETAAFF
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
 from utils.simulation.config import ConfigRepository
@@ -200,6 +207,7 @@ STRATEGY_REGISTRY = {
     ("fedavg", "random", "aff"): FedAvgRandomAFF,
     ("fedavg", "random", "hetaaff"): FedAvgRandomHETAAFF,
     ("fedavg", "random", "recombination"): FedAvgRandomRecombination,
+    ("fedavg", "random", "delayed"): FedAvgRandomConstantDelayed,
 
     ("fedavg", "oort", "constant"): FedAvgOortConstant,
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
@@ -213,6 +221,13 @@ STRATEGY_REGISTRY = {
 
     ("fedprox", "random", "constant"): FedProxRandomConstant,
     ("fedprox", "random", "criticalfl"): FedProxRandomCriticalFL,
+    ("fedprox", "random", "aff"): FedProxRandomAFF,
+    ("fedprox", "random", "hetaaff"): FedProxRandomHETAAFF,
+
+    ("feddyn", "random", "constant"): FedDynRandomConstant,
+    ("feddyn", "random", "criticalfl"): FedDynRandomCriticalFL,
+    ("feddyn", "random", "aff"): FedDynRandomAFF,
+    ("feddyn", "random", "hetaaff"): FedDynRandomHETAAFF,
 }
 
 
@@ -271,8 +286,9 @@ def get_server_app_components(context, strategy):
 
 
 def get_profiles(context):
+    model_name = context.run_config["model-name"]
     profiles_path = context.run_config[
-                        "root-profiles-dir"] + "profiles.json"
+                        "root-profiles-dir"] + f"profiles_{model_name}.json"
     with open(profiles_path, "r") as file:
         profiles = json.load(file)
     profiles = {int(k): v for k, v in profiles.items()}

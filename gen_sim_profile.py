@@ -36,12 +36,13 @@ def main():
     carbon_region = cfg["carbon-region"]
 
     net_scenario = cfg["net-scenario"]
+    model_name = cfg["model-name"]
 
-    profiles = create_profiles(num_clients, seed, devices_profile_path, net_speed_path, carbon_data_path,
+    profiles = create_profiles(num_clients, seed, devices_profile_path, model_name, net_speed_path, carbon_data_path,
                                prefer_time, prefer_battery, prefer_carbon, kj_low, kj_medium, kj_high, carbon_region,
                                net_scenario)
 
-    pro_files = cfg["root-profiles-dir"] + f"profiles.json"
+    pro_files = cfg["root-profiles-dir"] + f"profiles_{model_name}.json"
 
     with open(pro_files, "w") as file:
         json.dump(profiles, file, indent=2)

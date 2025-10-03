@@ -297,6 +297,182 @@ def train_prox_critical(model, dataloader, epochs, criterion, optimizer, device,
 
     return avg_loss, avg_acc, stat_util, avg_gn
 
+def train_feddyn(model, dataloader, epochs, criterion, optimizer, device, dataset_id, prev_grads, alpha):
+    model.to(device)
+    model.train()
+    squared_sum = num_samples = 0
+    key = DatasetConfig.BATCH_KEY[dataset_id]
+    value = DatasetConfig.BATCH_VALUE[dataset_id]
+
+    #feddyn adition
+    global_params = {
+        k: val.detach().clone().flatten() for (k, val) in model.named_parameters()
+    }
+
+    for k, _ in model.named_parameters():
+        prev_grads[k] = prev_grads[k].to(device)
+
+    for epoch in range(1, epochs + 1):
+        total_loss = 0
+        correct_pred = total_pred = 0
+
+        for batch in dataloader:
+            if isinstance(batch, dict):
+                x, y = batch[key].to(device), batch[value].to(device)
+            elif isinstance(batch, list):
+                x, y = batch[0].to(device), batch[1].to(device)
+
+            if len(y) <= 1:
+                continue
+
+            optimizer.zero_grad()
+            outputs = model(x)
+
+            if criterion.reduction == "none":
+                losses = criterion(outputs, y)
+
+                if epoch == epochs:
+                    squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
+                    num_samples += len(losses)
+
+                loss = losses.mean()
+            else:
+                loss = criterion(outputs, y)
+
+            predicted = outputs.argmax(1)
+            total_pred += y.size(0)
+            correct_pred += (predicted == y).sum().item()
+
+            # feddyn adition
+            for k, param in model.named_parameters():
+                curr_param = param.flatten()
+
+                lin_penalty = torch.dot(curr_param, prev_grads[k])
+                loss -= lin_penalty
+
+                quad_penalty = (
+                        alpha
+                        / 2.0
+                        * torch.sum(torch.square(curr_param - global_params[k]))
+                )
+
+                loss += quad_penalty
+
+            loss.backward()
+            U.clip_grad_norm_(model.parameters(), max_norm=10.0)
+            optimizer.step()
+            total_loss += loss.item() * y.size(0)
+
+        if epoch == epochs and num_samples > 0 and total_pred > 0 and correct_pred > 0:
+            avg_acc = correct_pred / total_pred
+            avg_loss = total_loss / total_pred
+
+            if criterion.reduction == "none":
+                stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))
+            else:
+                stat_util = 0
+        else:
+            avg_loss = avg_acc = stat_util = 0
+
+    prev_grads = update_prev_grads(model, prev_grads, global_params, alpha)
+
+    return avg_loss, avg_acc, stat_util, prev_grads
+
+def train_feddyn_critical(model, dataloader, epochs, criterion, optimizer, device, dataset_id, prev_grads, alpha):
+    model.to(device)
+    model.train()
+    squared_sum = num_samples = 0
+    key = DatasetConfig.BATCH_KEY[dataset_id]
+    value = DatasetConfig.BATCH_VALUE[dataset_id]
+    GNorm = []
+
+    #feddyn adition
+    global_params = {
+        k: val.detach().clone().flatten() for (k, val) in model.named_parameters()
+    }
+
+    for k, _ in model.named_parameters():
+        prev_grads[k] = prev_grads[k].to(device)
+
+    for epoch in range(1, epochs + 1):
+        total_loss = 0
+        correct_pred = total_pred = 0
+        grad_norm = 0
+
+        for batch in dataloader:
+            if isinstance(batch, dict):
+                x, y = batch[key].to(device), batch[value].to(device)
+            elif isinstance(batch, list):
+                x, y = batch[0].to(device), batch[1].to(device)
+
+            if len(y) <= 1:
+                continue
+
+            optimizer.zero_grad()
+            outputs = model(x)
+
+            if criterion.reduction == "none":
+                losses = criterion(outputs, y)
+
+                if epoch == epochs:
+                    squared_sum += float(sum(np.power(losses.cpu().detach().numpy(), 2)))
+                    num_samples += len(losses)
+
+                loss = losses.mean()
+            else:
+                loss = criterion(outputs, y)
+
+            predicted = outputs.argmax(1)
+            total_pred += y.size(0)
+            correct_pred += (predicted == y).sum().item()
+
+            # feddyn adition
+            for k, param in model.named_parameters():
+                curr_param = param.flatten()
+
+                lin_penalty = torch.dot(curr_param, prev_grads[k])
+                loss -= lin_penalty
+
+                quad_penalty = (
+                        alpha
+                        / 2.0
+                        * torch.sum(torch.square(curr_param - global_params[k]))
+                )
+
+                loss += quad_penalty
+
+            loss.backward()
+            U.clip_grad_norm_(model.parameters(), max_norm=10.0)
+            optimizer.step()
+            total_loss += loss.item() * y.size(0)
+
+            temp_norm = 0
+            for parms in model.parameters():
+                gnorm = parms.grad.detach().data.norm(2)
+                temp_norm = temp_norm + (gnorm.item()) ** 2
+
+            grad_norm = grad_norm + temp_norm
+
+        GNorm.append(grad_norm)
+
+        if epoch == epochs and num_samples > 0 and total_pred > 0 and correct_pred > 0:
+            avg_acc = correct_pred / total_pred
+            avg_loss = total_loss / total_pred
+
+            Lrnow = optimizer.param_groups[0]['lr']
+            avg_gn = np.mean(GNorm) * Lrnow
+
+            if criterion.reduction == "none":
+                stat_util = num_samples * ((squared_sum / num_samples) ** (1 / 2))
+            else:
+                stat_util = 0
+        else:
+            avg_loss = avg_acc = stat_util = avg_gn = 0
+
+    prev_grads = update_prev_grads(model, prev_grads, global_params, alpha)
+
+    return avg_loss, avg_acc, stat_util, prev_grads, avg_gn
+
 def test(model, dataloader, device, dataset_id):
     model.to(device)
     model.eval()
@@ -537,3 +713,14 @@ def probs_from_similarity(S, mode="similar", method="softmax", tau=0.1, alpha=1.
         raise ValueError("method inválido.")
 
     return P
+
+def update_prev_grads(net, prev_grads, global_params, alpha):
+    """Update prev_grads for FedDyn."""
+    for k, param in net.named_parameters():
+        curr_param = param.detach().clone().flatten()
+        prev_grads[k] = prev_grads[k] - alpha * (
+                curr_param - global_params[k]
+        )
+        prev_grads[k] = prev_grads[k].to(torch.device(torch.device("cpu")))
+
+    return prev_grads

@@ -11,7 +11,7 @@ from utils.profile.client_metrics import get_clients_battery, \
     get_clients_carbon_intensity, select_network_speeds, assign_client_profiles
 
 
-def load_devices(file_path: Union[str, os.PathLike[str]]) -> Any:
+def load_devices(file_path: Union[str, os.PathLike[str]], model_name: str) -> Any:
     """
     Carrega dispositivos de um arquivo JSON.
 
@@ -23,7 +23,8 @@ def load_devices(file_path: Union[str, os.PathLike[str]]) -> Any:
     Raises:
       FileNotFoundError, PermissionError, OSError, ValueError (JSON inválido).
     """
-    path = Path(file_path)
+    full_path = file_path + f"{model_name}.json"
+    path = Path(full_path)
 
     if not path.exists():
         raise FileNotFoundError(f"Arquivo não encontrado: {path}")
@@ -58,11 +59,11 @@ def load_devices(file_path: Union[str, os.PathLike[str]]) -> Any:
         raise OSError(f"Falha ao abrir/ler {path}: {e}") from e
 
 
-def create_profiles(num_clients: int, seed: int, devices_profile_path: str, bandwidth_path: str, carbon_data_path: str,
+def create_profiles(num_clients: int, seed: int, devices_profile_path: str, model_name: str, bandwidth_path: str, carbon_data_path: str,
                     prefer_time: str, prefer_battery: str, prefer_carbon: str, kj_low: int, kj_medium: int,
                     kj_high: int, carbon_region: str, net_scenario: str):
     # Load available profiles
-    devices = load_devices(devices_profile_path)
+    devices = load_devices(devices_profile_path, model_name)
 
     selected_devices = assign_client_profiles(devices, num_clients, mode=prefer_time, seed=seed)
 
