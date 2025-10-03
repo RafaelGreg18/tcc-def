@@ -1,8 +1,10 @@
-Pré-motivacionais:
+Experimentos:
 
 Motivacionais:
-1 - Experimento 1: model=MobilenetV2; lr=1e-2; weight-decay=1e-5; momentum=0; batch=16; epochs=10
-2 - Experimento 2: parou em dl-02 - Motivo: usuário comeu toda memória e impediu prosseguimento do processo.
+1 - Experimento 1: concluído
+2 - Experimento 2: concluído
+3 - Experimento 3: concluído
+4 - Experimento 4: a fazer, calcular no two_phase as distâncias para a global desejada
 
 Ponto crítico:
 1 - CKA permite encontrar fase crítica. Uma spline com tangente no ponto com inclinação menor que limite é suficiente.

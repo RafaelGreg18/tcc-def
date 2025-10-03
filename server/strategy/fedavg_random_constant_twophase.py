@@ -1,13 +1,17 @@
 import datetime
 import json
+import math
 import os
+from logging import WARNING
+from math import log2, sqrt
 from typing import Optional
 
-from flwr.common import Parameters, Scalar, parameters_to_ndarrays, FitIns
-from flwr.server.client_proxy import ClientProxy
+import numpy as np
+from flwr.common import Parameters, Scalar, parameters_to_ndarrays, ndarrays_to_parameters, log
+from flwr.server.strategy.aggregate import aggregate
+from numpy import asarray
 
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
-from utils.strategy.critical_point import RollingSlope
 
 
 class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
@@ -17,11 +21,9 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         self.num_participants_acp = self.context.run_config["num-participants-acp"]
         self.max_rounds = self.context.run_config["num-rounds"]
         self.cp = int(self.context.run_config["cp"])
-        # self.smooth_window = self.context.run_config["smooth-window"]
-        # self.tau_deriv = self.context.run_config["tau-deriv"]
-        # self._acc_hist = []
-        # self._deriv_abs_hist = []
         self.is_cp = True
+
+        self.samples_per_class_cids = None
 
     def _do_initialization(self, client_manager):
         current_date = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -46,30 +48,11 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
         else:
             return self.num_participants_acp, self.num_participants_acp
 
-
     def num_evaluation_clients(self, num_available_clients: int) -> tuple[int, int]:
         if self.is_cp:
-            return self.num_evaluators, self.num_participants_bcp #num_eval > num_part
+            return self.num_evaluators, self.num_participants_bcp  # num_eval > num_part
         else:
-            return self.num_evaluators, self.num_participants_acp #num_eval > num_part
-
-    # def _do_configure_fit(self, server_round, parameters, client_manager) -> list[tuple[ClientProxy, FitIns]]:
-    #     config = {}
-    #     if self.on_fit_config_fn is not None:
-    #         # Custom fit config function provided
-    #         config = self.on_fit_config_fn(server_round)
-    #     fit_ins = FitIns(parameters, config)
-    #
-    #     # Sample clients
-    #     sample_size, min_num_clients = self.num_fit_clients(
-    #         client_manager.num_available()
-    #     )
-    #     clients = client_manager.sample(
-    #         num_clients=sample_size, min_num_clients=min_num_clients
-    #     )
-    #
-    #     # Return client/config pairs
-    #     return [(client, fit_ins) for client in clients]
+            return self.num_evaluators, self.num_participants_acp  # num_eval > num_part
 
     def evaluate(
             self, server_round: int, parameters: Parameters
@@ -84,9 +67,16 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
             return None
         loss, metrics = eval_res
 
-        my_results = {"cen_loss": loss, **metrics}
-        # self.update_cp(server_round, my_results["cen_accuracy"])
-        # my_results["is_cp"] = self.is_cp
+        if server_round > 1:
+
+            uniform = asarray([0.1]*10)
+            totals = self.samples_per_class_cids.sum(axis=0)
+            P = totals / totals.sum()
+            js_div = self.js_divergence_base2(P, uniform)
+        else:
+            js_div = 0
+
+        my_results = {"cen_loss": loss, "js_div": js_div, **metrics}
 
         # Insert into local dictionary
         self.performance_metrics_to_save[server_round] = my_results
@@ -101,25 +91,79 @@ class FedAvgRandomConstantTwoPhase(FedAvgRandomConstant):
     def update_cp(self, server_round: int) -> int:
         if server_round > self.cp:
             self.is_cp = False
-    #     if server_round > 1:
-    #         self._push_accuracy(accuracy)
-    #         to_update_cp, mu_r = self._smoothed_abs_deriv()
-    #
-    #         if to_update_cp and mu_r <= self.tau_deriv:
-    #             self.is_cp = False
 
-    # def _push_accuracy(self, acc: float) -> None:
-    #     if self._acc_hist:
-    #         deriv = acc - self._acc_hist[-1]
-    #         self._deriv_abs_hist.append(abs(deriv))
-    #     self._acc_hist.append(acc)
-    #
-    #     # Mantém somente o necessário para a média móvel
-    #     v = max(1, self.smooth_window)
-    #     if len(self._deriv_abs_hist) > v:
-    #         self._deriv_abs_hist = self._deriv_abs_hist[-v:]
+    def _do_aggregate_fit(self, server_round, results, failures) -> tuple[Optional[Parameters], dict[str, Scalar]]:
+        """Aggregate fit results using weighted average."""
+        if not results:
+            return None, {}
+        # Do not aggregate if there are failures and failures are not accepted
+        if failures:
+            return None, {}
 
-    # def _smoothed_abs_deriv(self) -> tuple[bool,float]:
-    #     if not self._deriv_abs_hist or len(self._deriv_abs_hist) < self.smooth_window:
-    #         return False, 0.0
-    #     return True, sum(self._deriv_abs_hist) / len(self._deriv_abs_hist)
+        # Convert results
+        weights_results = [
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+            for _, fit_res in results
+        ]
+        aggregated_ndarrays = aggregate(weights_results)
+        parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
+
+        # Aggregate custom metrics if aggregation fn was provided
+        metrics_aggregated = {}
+        if self.fit_metrics_aggregation_fn:
+            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+            self.selected_cids = [res.metrics["cid"] for _, res in results]
+
+        elif server_round == 1:  # Only log this warning once
+            log(WARNING, "No fit_metrics_aggregation_fn provided")
+
+        if server_round > 1:
+            self.samples_per_class_cids = np.array([json.loads(fit_res.metrics["samples_per_class"]) for _, fit_res in results])
+
+        return parameters_aggregated, metrics_aggregated
+
+    import math
+
+    def kl_divergence_base2(self, p, q, normalize=True):
+        """
+        KL(p || q) em base 2.
+        - Se normalize=True, normaliza p e q para somarem 1.
+        - Retorna math.inf se existir i com p[i]>0 e q[i]==0.
+        """
+        # converte pra float e (opcional) normaliza
+        p = [float(x) for x in p]
+        q = [float(x) for x in q]
+        if normalize:
+            sp, sq = sum(p), sum(q)
+            if sp <= 0 or sq <= 0:
+                raise ValueError("Distribuições inválidas: soma zero ou negativa.")
+            p = [x / sp for x in p]
+            q = [x / sq for x in q]
+
+        kl = 0.0
+        log2 = math.log(2.0)
+        for pi, qi in zip(p, q):
+            if pi == 0.0:
+                continue  # 0 * log(0/qi) = 0
+            if qi == 0.0:
+                return math.inf  # KL -> infinito
+            kl += pi * (math.log(pi / qi) / log2)
+        return kl
+
+    def js_divergence_base2(self, p, q, eps=1e-12, normalize=True):
+        # normaliza e aplica eps para estabilidade numérica
+        p = [float(x) for x in p]
+        q = [float(x) for x in q]
+        if normalize:
+            sp, sq = sum(p), sum(q)
+            if sp <= 0 or sq <= 0:
+                raise ValueError("Distribuições inválidas.")
+            p = [x / sp for x in p]
+            q = [x / sq for x in q]
+        p = [max(x, eps) for x in p]
+        q = [max(x, eps) for x in q]
+        m = [(pi + qi) / 2.0 for pi, qi in zip(p, q)]
+        return 0.5 * self.kl_divergence_base2(p, m, normalize=False) + \
+            0.5 * self.kl_divergence_base2(q, m, normalize=False)
+
