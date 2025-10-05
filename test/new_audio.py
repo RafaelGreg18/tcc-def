@@ -29,7 +29,7 @@ class CFG:
     time_shift_s: float = 0.10
     time_mask_param: int = 20
     freq_mask_param: int = 8
-    batch: int = 128
+    batch: int = 16
     local_epochs: int = 10
     lr: float = 1e-3
     weight_decay: float = 1e-4
