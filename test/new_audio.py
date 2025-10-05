@@ -263,12 +263,9 @@ def evaluate(model, loader, device):
     return loss_sum / max(1, tot), acc / max(1, tot)
 
 
-def local_train(model_init: nn.Module, loader: DataLoader, device) -> Tuple[List[np.ndarray], int]:
-    # copia o modelo global, treina por CFG.local_epochs e devolve pesos + nº exemplos
-    model = type(model_init)(*[]).__new__(type(model_init))  # construção "vazia"
-    model.__dict__ = {**model_init.__dict__}
-    set_parameters(model, get_parameters(model_init))
-    model.to(device)
+def local_train(model_factory, global_params: List[np.ndarray], loader: DataLoader, device):
+    model = model_factory().to(device)
+    set_parameters(model, global_params)  # usa state_dict/load_state_dict
     opt = torch.optim.Adam(model.parameters(), lr=CFG.lr, weight_decay=CFG.weight_decay)
     for _ in range(CFG.local_epochs):
         train_one_epoch(model, loader, device, opt)
@@ -339,7 +336,9 @@ def main():
             loader = make_loader(part_kws, id_map=id_map, train=True)
             if loader is None:
                 continue
-            params, n = local_train(model, loader, device)
+
+            global_params = get_parameters(model)
+            params, n = local_train(lambda: KWSNet(n_classes=num_classes), global_params, loader, device)
             updates.append((params, n))
 
         if not updates:
