@@ -530,7 +530,7 @@ def weighted_average(metrics: List[Tuple[int, Dict[str, float]]]) -> Dict[str, f
 
 def make_server_app(num_rounds: int, fraction_fit: float, fraction_evaluate: float, min_available_clients: int,
                     evaluate_fn=None):
-    def server_fn(context: fl.server.ServerContext):
+    def server_fn(context: Context):
         strategy = fl.server.strategy.FedAdam(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
