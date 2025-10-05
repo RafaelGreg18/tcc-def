@@ -529,18 +529,34 @@ def weighted_average(metrics: List[Tuple[int, Dict[str, float]]]) -> Dict[str, f
 
 
 def make_server_app(num_rounds: int, fraction_fit: float, fraction_evaluate: float, min_available_clients: int,
-                    evaluate_fn=None):
+                    evaluate_fn=None, model_name="cnn", num_classes=10, width_mult=1.0):
     def server_fn(context: Context):
+        # Cria modelo base para inicialização
+        if model_name.lower() == "tcresnet8":
+            model = TCResNet8(CFG.N_MELS, n_classes=num_classes, width_mult=width_mult, dropout=CFG.DROPOUT)
+        else:
+            model = KWSNet(n_classes=num_classes)
+        initial_parameters = fl.common.ndarrays_to_parameters(
+            [val.cpu().numpy() for _, val in model.state_dict().items()]
+        )
+
         strategy = fl.server.strategy.FedAdam(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
             min_available_clients=min_available_clients,
-            on_fit_config_fn=lambda rnd: {"local_epochs": CFG.NUM_EPOCHS_LOCAL, "lr": CFG.LR_LOCAL,
-                                          "weight_decay": CFG.WEIGHT_DECAY},
+            on_fit_config_fn=lambda rnd: {
+                "local_epochs": CFG.NUM_EPOCHS_LOCAL,
+                "lr": CFG.LR_LOCAL,
+                "weight_decay": CFG.WEIGHT_DECAY,
+            },
             evaluate_metrics_aggregation_fn=weighted_average,
             evaluate_fn=evaluate_fn,
-            eta=0.05, beta_1=0.9, beta_2=0.99,
+            eta=0.05,
+            beta_1=0.9,
+            beta_2=0.99,
+            initial_parameters=initial_parameters,
         )
+
         return fl.server.ServerAppComponents(
             strategy=strategy,
             config=fl.server.ServerConfig(num_rounds=num_rounds),
@@ -651,7 +667,7 @@ def main():
         client_fn=make_client_fn_fds(fds, id_map=id_map, num_classes=num_classes, model_name=args.model,
                                      width_mult=args.k))
     server_app = make_server_app(args.rounds, args.fit_frac, args.eval_frac, min_available_clients=effective_clients,
-                                 evaluate_fn=evaluate_fn)
+                                 evaluate_fn=evaluate_fn, model_name=args.model, num_classes=num_classes, width_mult=args.k,)
 
     # Resources per virtual client
     backend_config = {
