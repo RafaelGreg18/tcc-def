@@ -1,0 +1,1202 @@
+{
+  "2": {
+    "total_mJ": 1354106238.0759933,
+    "total_ceq": 79.92899663052961,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "3": {
+    "total_mJ": 2129352633.1751611,
+    "total_ceq": 126.47083336866686,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "4": {
+    "total_mJ": 933938877.7823082,
+    "total_ceq": 54.286059853834466,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "5": {
+    "total_mJ": 1668453922.6116936,
+    "total_ceq": 102.4815535077629,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "6": {
+    "total_mJ": 1775439023.3332622,
+    "total_ceq": 108.36423948756143,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "7": {
+    "total_mJ": 1682995024.1018157,
+    "total_ceq": 104.57161520806844,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "8": {
+    "total_mJ": 1340617854.2168257,
+    "total_ceq": 78.52131369162379,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "9": {
+    "total_mJ": 1687671145.1413772,
+    "total_ceq": 104.35880342627343,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "10": {
+    "total_mJ": 1782152040.3883412,
+    "total_ceq": 107.04133844341165,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "11": {
+    "total_mJ": 833400966.2969338,
+    "total_ceq": 52.23437109931124,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "12": {
+    "total_mJ": 1756538408.3866372,
+    "total_ceq": 105.7759156670977,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "13": {
+    "total_mJ": 829932586.2074834,
+    "total_ceq": 52.18005979647024,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "14": {
+    "total_mJ": 813932928.8819305,
+    "total_ceq": 51.44388599663638,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "15": {
+    "total_mJ": 740735094.2557142,
+    "total_ceq": 45.18673756202502,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "16": {
+    "total_mJ": 1534006468.0754046,
+    "total_ceq": 90.2317744289424,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "17": {
+    "total_mJ": 1218035295.0720956,
+    "total_ceq": 73.77125772350553,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "18": {
+    "total_mJ": 2152912913.3181424,
+    "total_ceq": 125.34527692545912,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "19": {
+    "total_mJ": 1231342150.5318122,
+    "total_ceq": 74.64677885318832,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "20": {
+    "total_mJ": 767271129.5697899,
+    "total_ceq": 46.12084300144075,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "21": {
+    "total_mJ": 794941654.7320154,
+    "total_ceq": 48.44987103472721,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "22": {
+    "total_mJ": 1256125947.55971,
+    "total_ceq": 76.57680236347005,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "23": {
+    "total_mJ": 1166091155.926889,
+    "total_ceq": 70.70873464457445,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "24": {
+    "total_mJ": 946426160.3560945,
+    "total_ceq": 55.924763636650994,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "25": {
+    "total_mJ": 1325988029.2168145,
+    "total_ceq": 78.47277190134898,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "26": {
+    "total_mJ": 1659696445.1714616,
+    "total_ceq": 100.16294565926104,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "27": {
+    "total_mJ": 1106357021.2021635,
+    "total_ceq": 66.08327902812015,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "28": {
+    "total_mJ": 1667747944.464094,
+    "total_ceq": 101.49769994069365,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "29": {
+    "total_mJ": 832301405.6674815,
+    "total_ceq": 51.64442671998135,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "30": {
+    "total_mJ": 1269809264.7912953,
+    "total_ceq": 77.66788074999555,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "31": {
+    "total_mJ": 1528190307.2911794,
+    "total_ceq": 90.41010341610658,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "32": {
+    "total_mJ": 1531708767.7587914,
+    "total_ceq": 90.86400603074893,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "33": {
+    "total_mJ": 1544842459.2378926,
+    "total_ceq": 92.43389708691303,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "34": {
+    "total_mJ": 925459138.7470535,
+    "total_ceq": 53.6520229988254,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "35": {
+    "total_mJ": 1319752407.3031926,
+    "total_ceq": 78.20451782417774,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "36": {
+    "total_mJ": 1007330871.1750869,
+    "total_ceq": 62.10813171426588,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "37": {
+    "total_mJ": 1374640631.7489283,
+    "total_ceq": 85.01314241244813,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "38": {
+    "total_mJ": 1669631151.197567,
+    "total_ceq": 104.05890712272691,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "39": {
+    "total_mJ": 750734204.7295434,
+    "total_ceq": 44.42954915766961,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "40": {
+    "total_mJ": 1107514344.8662782,
+    "total_ceq": 65.84076215230026,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "41": {
+    "total_mJ": 940954919.5529176,
+    "total_ceq": 58.15058540520062,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "42": {
+    "total_mJ": 1697106858.1234443,
+    "total_ceq": 104.02267491539394,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "43": {
+    "total_mJ": 854473168.4271398,
+    "total_ceq": 51.85877947526358,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "44": {
+    "total_mJ": 1351231749.6570141,
+    "total_ceq": 77.86593633126664,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "45": {
+    "total_mJ": 1783595960.2075083,
+    "total_ceq": 105.27953110444928,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "46": {
+    "total_mJ": 1252631163.407905,
+    "total_ceq": 76.54705101542464,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "47": {
+    "total_mJ": 1383238729.4080555,
+    "total_ceq": 81.13130135341119,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "48": {
+    "total_mJ": 1545784052.5499895,
+    "total_ceq": 94.22868717488241,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "49": {
+    "total_mJ": 1691072232.760111,
+    "total_ceq": 103.63238151515571,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "50": {
+    "total_mJ": 811476339.2895068,
+    "total_ceq": 51.01885188681607,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "51": {
+    "total_mJ": 934268040.2962308,
+    "total_ceq": 54.607802203208195,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "52": {
+    "total_mJ": 1672632985.7207718,
+    "total_ceq": 101.14750782634049,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "53": {
+    "total_mJ": 1150223650.3264482,
+    "total_ceq": 69.6334382265523,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "54": {
+    "total_mJ": 922813888.8681427,
+    "total_ceq": 53.135383855635,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "55": {
+    "total_mJ": 1371877113.0634964,
+    "total_ceq": 82.74764428270454,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "56": {
+    "total_mJ": 849356531.9196401,
+    "total_ceq": 52.63024774567408,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "57": {
+    "total_mJ": 1375211733.4931445,
+    "total_ceq": 81.74448922169798,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "58": {
+    "total_mJ": 1374705912.962196,
+    "total_ceq": 84.65175604582942,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "59": {
+    "total_mJ": 1530767824.496985,
+    "total_ceq": 89.8067320450766,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "60": {
+    "total_mJ": 2176516697.7661343,
+    "total_ceq": 126.0661041821881,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "61": {
+    "total_mJ": 1518797498.8592217,
+    "total_ceq": 88.10322280831889,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "62": {
+    "total_mJ": 1669437355.9174032,
+    "total_ceq": 99.67985058026717,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "63": {
+    "total_mJ": 1528410634.9922183,
+    "total_ceq": 92.73467938865781,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "64": {
+    "total_mJ": 1749911382.2016447,
+    "total_ceq": 101.53169388730716,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "65": {
+    "total_mJ": 1378034826.4947627,
+    "total_ceq": 85.10252787638544,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "66": {
+    "total_mJ": 845043676.1260934,
+    "total_ceq": 52.273575902316566,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "67": {
+    "total_mJ": 1698257608.4337091,
+    "total_ceq": 107.818934545917,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "68": {
+    "total_mJ": 1353783982.8639433,
+    "total_ceq": 81.6373728127745,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "69": {
+    "total_mJ": 946088155.2627858,
+    "total_ceq": 60.385766269969,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "70": {
+    "total_mJ": 1007518891.2886286,
+    "total_ceq": 62.66157128986497,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "71": {
+    "total_mJ": 954744175.9084679,
+    "total_ceq": 59.57714056872165,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "72": {
+    "total_mJ": 950636191.6830058,
+    "total_ceq": 57.47456177539711,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "73": {
+    "total_mJ": 1010277015.5787627,
+    "total_ceq": 62.75042982871174,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "74": {
+    "total_mJ": 1340534297.6935916,
+    "total_ceq": 78.89492259790607,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "75": {
+    "total_mJ": 1151237907.6060796,
+    "total_ceq": 67.41716566144837,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "76": {
+    "total_mJ": 1377687071.1572773,
+    "total_ceq": 86.25561815554659,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "77": {
+    "total_mJ": 1300677763.253837,
+    "total_ceq": 84.68524731958597,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "78": {
+    "total_mJ": 1278359755.6059349,
+    "total_ceq": 77.4474905976021,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "79": {
+    "total_mJ": 1374448684.189818,
+    "total_ceq": 84.2371103527686,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "80": {
+    "total_mJ": 962115989.2140278,
+    "total_ceq": 59.782798278687025,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "81": {
+    "total_mJ": 2161507675.73895,
+    "total_ceq": 128.722164149336,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "82": {
+    "total_mJ": 1364325511.1133592,
+    "total_ceq": 82.9081506826652,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "83": {
+    "total_mJ": 1359486434.621244,
+    "total_ceq": 80.7212404859628,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "84": {
+    "total_mJ": 1681295375.3391345,
+    "total_ceq": 103.56709648959392,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "85": {
+    "total_mJ": 1138130147.467803,
+    "total_ceq": 66.62385220512276,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "86": {
+    "total_mJ": 1552901143.946864,
+    "total_ceq": 96.22956540475411,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "87": {
+    "total_mJ": 833244443.6787173,
+    "total_ceq": 51.761318094607,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "88": {
+    "total_mJ": 1341641369.9239032,
+    "total_ceq": 81.40182236114354,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "89": {
+    "total_mJ": 824380926.0043535,
+    "total_ceq": 52.510201664187484,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "90": {
+    "total_mJ": 2155836120.8548784,
+    "total_ceq": 130.04338054033352,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "91": {
+    "total_mJ": 1336481142.7497897,
+    "total_ceq": 81.56458556400608,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "92": {
+    "total_mJ": 1364053690.5128229,
+    "total_ceq": 81.31272417302135,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "93": {
+    "total_mJ": 2159968800.914024,
+    "total_ceq": 126.15802221544685,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "94": {
+    "total_mJ": 1779659176.6873095,
+    "total_ceq": 106.58425322446777,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "95": {
+    "total_mJ": 2169585988.2752237,
+    "total_ceq": 128.69667015745776,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "96": {
+    "total_mJ": 1327056933.460502,
+    "total_ceq": 76.80831446653295,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "97": {
+    "total_mJ": 948824077.2637203,
+    "total_ceq": 58.22369871448713,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "98": {
+    "total_mJ": 1382339111.7908454,
+    "total_ceq": 84.96127573386902,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "99": {
+    "total_mJ": 1265856201.6057022,
+    "total_ceq": 77.75743718633495,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "100": {
+    "total_mJ": 1235665309.3370864,
+    "total_ceq": 74.34324126447322,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "101": {
+    "total_mJ": 1146201369.929597,
+    "total_ceq": 66.41343807524862,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "102": {
+    "total_mJ": 1673125996.2005217,
+    "total_ceq": 101.48361328414406,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "103": {
+    "total_mJ": 1262455800.4870293,
+    "total_ceq": 77.97230939950252,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "104": {
+    "total_mJ": 1162495485.895307,
+    "total_ceq": 67.17353099328756,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "105": {
+    "total_mJ": 958034097.7277275,
+    "total_ceq": 59.39665829144917,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "106": {
+    "total_mJ": 2174775090.5000057,
+    "total_ceq": 124.26764356064662,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "107": {
+    "total_mJ": 1537476895.926463,
+    "total_ceq": 91.30009428785534,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "108": {
+    "total_mJ": 1676406798.1361458,
+    "total_ceq": 102.17986386784986,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "109": {
+    "total_mJ": 1252935089.105818,
+    "total_ceq": 77.46629993472767,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "110": {
+    "total_mJ": 1254790557.877047,
+    "total_ceq": 77.81436627580732,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "111": {
+    "total_mJ": 1363775741.0507934,
+    "total_ceq": 80.74428790776095,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "112": {
+    "total_mJ": 936607685.0803857,
+    "total_ceq": 54.318691648348846,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "113": {
+    "total_mJ": 1253368739.9240959,
+    "total_ceq": 78.64421541354933,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "114": {
+    "total_mJ": 905268407.0064254,
+    "total_ceq": 54.74712081616153,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "115": {
+    "total_mJ": 1523301075.9048595,
+    "total_ceq": 91.26496487029165,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "116": {
+    "total_mJ": 972137990.6007444,
+    "total_ceq": 59.930226524052394,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "117": {
+    "total_mJ": 935789802.3140779,
+    "total_ceq": 58.28982829317785,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "118": {
+    "total_mJ": 930497879.8626622,
+    "total_ceq": 55.41617372873405,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "119": {
+    "total_mJ": 1019388152.9587039,
+    "total_ceq": 62.34068865655327,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "120": {
+    "total_mJ": 947529769.4261951,
+    "total_ceq": 58.587220291043685,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "121": {
+    "total_mJ": 1528741883.8196197,
+    "total_ceq": 91.31164597921719,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "122": {
+    "total_mJ": 1360006419.8494644,
+    "total_ceq": 81.0636500377211,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "123": {
+    "total_mJ": 1016076822.5641545,
+    "total_ceq": 62.79848109884408,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "124": {
+    "total_mJ": 1240084038.2894924,
+    "total_ceq": 73.95233734959047,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "125": {
+    "total_mJ": 1231329131.6266994,
+    "total_ceq": 74.78154561679045,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "126": {
+    "total_mJ": 1368860956.132245,
+    "total_ceq": 81.65816119361195,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "127": {
+    "total_mJ": 1379631510.2862227,
+    "total_ceq": 88.61506605125903,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "128": {
+    "total_mJ": 1363230429.2463171,
+    "total_ceq": 80.13389427166392,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "129": {
+    "total_mJ": 839653410.9721946,
+    "total_ceq": 51.42822049819493,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "130": {
+    "total_mJ": 1280757802.4206169,
+    "total_ceq": 78.75019518786519,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "131": {
+    "total_mJ": 1533183581.3880444,
+    "total_ceq": 91.89389388610375,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "132": {
+    "total_mJ": 729076379.6472324,
+    "total_ceq": 42.342293617442344,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "133": {
+    "total_mJ": 2157132270.7325034,
+    "total_ceq": 129.75971721238713,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "134": {
+    "total_mJ": 903982443.8503178,
+    "total_ceq": 52.10292403559232,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "135": {
+    "total_mJ": 1757379178.6510491,
+    "total_ceq": 100.9493719526637,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "136": {
+    "total_mJ": 741904806.6683787,
+    "total_ceq": 45.42004083997525,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "137": {
+    "total_mJ": 1100920763.3239317,
+    "total_ceq": 65.69918339128112,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "138": {
+    "total_mJ": 1283001699.9686558,
+    "total_ceq": 80.62571012936864,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "139": {
+    "total_mJ": 1537862714.7969577,
+    "total_ceq": 92.41478504068223,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "140": {
+    "total_mJ": 1534121622.0156062,
+    "total_ceq": 92.93460870102294,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "141": {
+    "total_mJ": 1327360505.436849,
+    "total_ceq": 75.98358867053382,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "142": {
+    "total_mJ": 2126328668.1671772,
+    "total_ceq": 126.60945023377121,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "143": {
+    "total_mJ": 1253337307.8259802,
+    "total_ceq": 78.55472340976435,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "144": {
+    "total_mJ": 1788692633.4312599,
+    "total_ceq": 108.70160584550483,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "145": {
+    "total_mJ": 933022059.019054,
+    "total_ceq": 57.63337572388334,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "146": {
+    "total_mJ": 1364386060.1131005,
+    "total_ceq": 78.71719449043805,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "147": {
+    "total_mJ": 1680615784.5779717,
+    "total_ceq": 104.53693156988139,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "148": {
+    "total_mJ": 1266940251.8861265,
+    "total_ceq": 77.40664465915347,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "149": {
+    "total_mJ": 1751742100.9750638,
+    "total_ceq": 103.72352567505907,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "150": {
+    "total_mJ": 1325168158.336234,
+    "total_ceq": 77.98565506156149,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  },
+  "151": {
+    "total_mJ": 1091506615.4423149,
+    "total_ceq": 64.03995308833679,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 787312064,
+    "num_participants": 10
+  }
+}
