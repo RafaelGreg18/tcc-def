@@ -25,6 +25,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from flwr.common import Context
 # Flower Datasets (download + partitioning)
 from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import (
@@ -486,7 +487,7 @@ class SpeechClient(fl.client.NumPyClient):
 
 def make_client_fn_fds(fds: FederatedDataset, id_map: Dict[int, int], num_classes: int, model_name: str = "cnn",
                        width_mult: float = 1.0):
-    def client_fn(context: fl.client.ClientContext):
+    def client_fn(context: Context):
         cid = context.node_id
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
