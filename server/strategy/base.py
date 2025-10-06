@@ -184,6 +184,8 @@ class BaseStrategy(Strategy):
             else:
                 num_depleted = num_expired_thresh = 0
 
+            #updating failures
+            self.num_failures = len(failures)
             # Saving systemic values
             self.save_round_system_metrics(cids_carbon_footprint, cids_joules_consumption,
                                            num_depleted, num_expired_thresh, num_transmited_bytes, server_round)
@@ -309,7 +311,8 @@ class BaseStrategy(Strategy):
                       "num_expired_thresh": num_expired_thresh,
                       "num_depleted": num_depleted,
                       "num_transmited_bytes": num_transmited_bytes,
-                      "num_participants": self.num_participants
+                      "num_participants": self.num_participants,
+                      "num_failures": self.num_failures
                       }
         # Insert into local dictionary
         self.system_metrics_to_save[server_round] = my_results

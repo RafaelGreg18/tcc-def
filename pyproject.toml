@@ -190,3 +190,4 @@ options.backend.client-resources.num-cpus = 1
 options.backend.client-resources.num-gpus = 0.2
 options.backend.init_args.num_cpus = 10
 options.backend.init_args.num_gpus = 1
+options.backend.init_args.RAY_memory_monitor_refresh_ms = 0
