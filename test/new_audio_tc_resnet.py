@@ -1,6 +1,9 @@
 # pip install torch torchaudio flwr-datasets datasets
+
 import argparse
 import random
+import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Set
 
@@ -13,7 +16,6 @@ from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import NaturalIdPartitioner
 from torch.utils.data import Dataset, DataLoader
 from torchaudio.transforms import MelSpectrogram, AmplitudeToDB, TimeMasking, FrequencyMasking
-
 
 # -----------------------
 # Config
@@ -37,18 +39,16 @@ class CFG:
     rounds: int = 50  # ajuste se quiser (ex.: 150)
     frac_clients: float = 0.025  # 2.5%
     seed: int = 42
-    width_mult: float = 1.0  # multiplicador de canais para TC-ResNet8
-
+    width_mult: float = 1.0  # multiplicador de canais TC-ResNet8
+    concurrent_clients: int = 5  # quantos clientes treinam simultaneamente na GPU (ajuste conforme VRAM)
 
 KWS10: Set[str] = {"yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go"}
-
 
 def set_seed(s=42):
     random.seed(s)
     np.random.seed(s)
     torch.manual_seed(s)
     torch.cuda.manual_seed_all(s)
-
 
 # -----------------------
 # Utils
@@ -65,18 +65,18 @@ def pad_trunc(waveform: torch.Tensor, target_len: int) -> torch.Tensor:
     out[:T] = waveform
     return out
 
-
 def time_shift(waveform: torch.Tensor, max_shift: int) -> torch.Tensor:
-    if max_shift <= 0: return waveform
+    if max_shift <= 0:
+        return waveform
     shift = int(random.uniform(-max_shift, max_shift))
-    if shift == 0: return waveform
+    if shift == 0:
+        return waveform
     x = torch.roll(waveform, shifts=shift, dims=-1)
     if shift > 0:
         x[..., :shift] = 0
     else:
         x[..., shift:] = 0
     return x
-
 
 # -----------------------
 # Feature pipeline (log-Mel + SpecAugment leve)
@@ -106,7 +106,6 @@ class Featurizer(nn.Module):
         m, s = spec_db.mean(), spec_db.std().clamp(min=1e-6)
         return (spec_db - m) / s  # (1, n_mels, time)
 
-
 # -----------------------
 # Torch Dataset wrapper p/ HF
 # -----------------------
@@ -129,18 +128,15 @@ class HFSpeechKWS(Dataset):
         y = self.id_map[y_global]
         return mel, y
 
-
 def build_id_map_from_names(label_names: List[str]) -> Dict[int, int]:
     allowed = [i for i, n in enumerate(label_names) if n.lower() in KWS10]
     return {gid: j for j, gid in enumerate(allowed)}
-
 
 def filter_to_kws10(hf_ds, label_names: List[str]):
     allow_ids = {i for i, n in enumerate(label_names) if n.lower() in KWS10}
     def _keep(ex):
         return (not ex.get("is_unknown", False)) and int(ex["label"]) in allow_ids
     return hf_ds.filter(_keep)
-
 
 def make_kws10_train_preprocessor():
     """Mantém apenas as 10 palavras no split 'train'.
@@ -155,7 +151,6 @@ def make_kws10_train_preprocessor():
         out["train"] = ds["train"].filter(keep_kws10)
         return out
     return _pre
-
 
 # -----------------------
 # TC-ResNet (temporal conv, mobile-friendly KWS)
@@ -181,7 +176,7 @@ class _S2BlockTC(nn.Module):
 
 class TCResNet8(nn.Module):
     """TC-ResNet8: bins (Mel) como canais, conv apenas ao longo do tempo.
-    1ª conv (1,3); blocos residuais com (1,9); 3 estágios stride-2; GAP + 1x1.  :contentReference[oaicite:1]{index=1}
+    1ª conv (1,3); blocos residuais com (1,9); 3 estágios stride-2; GAP + 1x1.
     """
     def __init__(self, n_mels: int, n_classes: int, width_mult: float = 1.0, dropout: float = 0.5):
         super().__init__()
@@ -207,13 +202,11 @@ class TCResNet8(nn.Module):
             x = x.squeeze(1)         # (B, n_mels, T)
         if x.dim() == 3:
             x = x.unsqueeze(2)       # (B, n_mels, 1, T)
-
         x = self.relu(self.bn_in(self.conv_in(x)))
         x = self.s2_0(x); x = self.s2_1(x); x = self.s2_2(x)
         x = self.avg(x); x = self.drop(x)
         x = self.fc(x)
         return x.flatten(1)  # (B, n_classes)
-
 
 # -----------------------
 # FedAvg helpers (sem framework)
@@ -230,14 +223,13 @@ def fedavg(sets: List[Tuple[List[np.ndarray], int]]) -> List[np.ndarray]:
     total = sum(n for _, n in sets)
     agg = None
     for params, n in sets:
-        w = n / total
+        w = n / max(1, total)
         if agg is None:
             agg = [w * p for p in params]
         else:
             for i in range(len(params)):
                 agg[i] += w * params[i]
     return agg
-
 
 # -----------------------
 # Treino local e avaliação
@@ -246,13 +238,17 @@ def make_loader(hf_ds, id_map: Dict[int, int], train: bool) -> Optional[DataLoad
     if len(hf_ds) == 0:
         return None
     ds = HFSpeechKWS(hf_ds, train=train, id_map=id_map)
-    return DataLoader(ds, batch_size=CFG.batch, shuffle=train, num_workers=2)
+    return DataLoader(
+        ds, batch_size=CFG.batch, shuffle=train, num_workers=2,
+        pin_memory=True  # transf. host->GPU mais eficiente
+    )
 
 def train_one_epoch(model, loader, device, optimizer):
     model.train()
     scaler = torch.cuda.amp.GradScaler(enabled=(device.type == "cuda"))
     for X, y in loader:
-        X = X.to(device); y = y.to(device)
+        X = X.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)
         optimizer.zero_grad(set_to_none=True)
         if device.type == "cuda":
             with torch.cuda.amp.autocast():
@@ -266,7 +262,7 @@ def evaluate(model, loader, device):
     model.eval(); tot = 0; acc = 0; loss_sum = 0.0
     with torch.no_grad():
         for X, y in loader:
-            X = X.to(device); y = y.to(device)
+            X = X.to(device, non_blocking=True); y = y.to(device, non_blocking=True)
             logits = model(X); loss = F.cross_entropy(logits, y)
             loss_sum += float(loss.item()) * X.size(0)
             pred = logits.argmax(1)
@@ -281,12 +277,11 @@ def local_train(model_factory, global_params: List[np.ndarray], loader: DataLoad
         train_one_epoch(model, loader, device, opt)
     return get_parameters(model), len(loader.dataset)
 
-
 # -----------------------
 # Dados: FederatedDataset (apenas para particionar/carregar)
 # -----------------------
 def build_fds_train_test():
-    pre = make_kws10_train_preprocessor()
+    pre = make_kws10_train_preprocessor()  # filtra train em KWS10 (clientes vazios somem)
     part_train = NaturalIdPartitioner(partition_by="speaker_id")
     cfg = DownloadConfig(resume_download=True, max_retries=20, storage_options={"timeout": 600})
     fds = FederatedDataset(
@@ -299,11 +294,84 @@ def build_fds_train_test():
     )
     return fds
 
+# -----------------------
+# Worker multiprocessado: treina 1 cliente e devolve atualização
+# -----------------------
+def client_update_worker(pid: int,
+                         global_params: List[np.ndarray],
+                         id_map: Dict[int, int],
+                         n_classes: int) -> Tuple[int, Optional[List[np.ndarray]], int]:
+    """Processo filho: treina 1 cliente e devolve (pid, params_atualizados, n_samples)."""
+    # Cada processo reabre o dataset/partição (cache HF em disco é compartilhado)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fds = build_fds_train_test()
+    part = fds.load_partition(pid, split="train")
+    loader = make_loader(part, id_map=id_map, train=True)
+    if loader is None:
+        return pid, None, 0
+
+    def model_factory():
+        return TCResNet8(
+            n_mels=CFG.n_mels, n_classes=n_classes,
+            width_mult=CFG.width_mult, dropout=CFG.dropout
+        )
+
+    params, n = local_train(model_factory, global_params, loader, device)
+    return pid, params, n
 
 # -----------------------
-# Main: FL loop c/ 2.5% clientes/rodada e teste final
+# Loop FedAvg com paralelismo
+# -----------------------
+def run_fedavg_parallel(model, id_map, num_clients, num_classes, test_loader, device):
+    m_per_round = max(1, int(round(CFG.frac_clients * num_clients)))
+    print(f"Amostrando {m_per_round} clientes/rodada ({100 * CFG.frac_clients:.2f}%). "
+          f"Concorrência: {CFG.concurrent_clients}. Rodadas: {CFG.rounds}.")
+
+    for rnd in range(1, CFG.rounds + 1):
+        chosen = random.choices(range(num_clients), k=m_per_round)
+
+        updates_all: List[Tuple[List[np.ndarray], int]] = []
+        global_params = get_parameters(model)  # congela estado global desta rodada
+
+        # Dispara em lotes de até CFG.concurrent_clients processos
+        for start in range(0, len(chosen), CFG.concurrent_clients):
+            batch_pids = chosen[start:start + CFG.concurrent_clients]
+
+            with ProcessPoolExecutor(
+                max_workers=len(batch_pids),
+                mp_context=mp.get_context("spawn")
+            ) as ex:
+                futs = [
+                    ex.submit(client_update_worker, pid, global_params, id_map, num_classes)
+                    for pid in batch_pids
+                ]
+                for fut in as_completed(futs):
+                    pid, params, n = fut.result()
+                    if params is not None and n > 0:
+                        updates_all.append((params, n))
+
+        if not updates_all:
+            print(f"[Round {rnd}] nenhuma atualização (todas partições vazias).")
+            continue
+
+        # Agregação FedAvg da rodada inteira
+        new_params = fedavg(updates_all)
+        set_parameters(model, new_params)
+
+        if rnd % 5 == 0 or rnd == CFG.rounds:
+            tl, ta = evaluate(model, test_loader, device)
+            print(f"[Round {rnd}] Test loss={tl:.4f} acc={ta:.4f}")
+
+# -----------------------
+# Main
 # -----------------------
 def main():
+    # Configure 'spawn' ANTES de inicializar CUDA (boa prática com multiprocessos)  # ref: PyTorch docs
+    try:
+        mp.set_start_method("spawn", force=True)
+    except RuntimeError:
+        pass
+
     set_seed(CFG.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -331,42 +399,13 @@ def main():
             n_mels=CFG.n_mels, n_classes=num_classes,
             width_mult=CFG.width_mult, dropout=CFG.dropout
         )
-
     model = model_factory().to(device)
 
-    # Rodadas de FL
-    m_per_round = max(1, int(round(CFG.frac_clients * num_clients)))
-    print(f"Amostrando {m_per_round} clientes/rodada ({100 * CFG.frac_clients:.2f}%). Rodadas: {CFG.rounds}.")
-
-    for rnd in range(1, CFG.rounds + 1):
-        chosen = random.choices(range(num_clients), k=m_per_round)
-
-        updates: List[Tuple[List[np.ndarray], int]] = []
-        for pid in chosen:
-            part = fds.load_partition(pid, split="train")
-            loader = make_loader(part, id_map=id_map, train=True)
-            if loader is None:
-                continue
-            global_params = get_parameters(model)
-            params, n = local_train(model_factory, global_params, loader, device)
-            updates.append((params, n))
-
-        if not updates:
-            print(f"[Round {rnd}] nenhuma atualização (todas partições vazias após filtro).")
-            continue
-
-        # Agregação FedAvg
-        new_params = fedavg(updates)
-        set_parameters(model, new_params)
-
-        if rnd % 5 == 0 or rnd == CFG.rounds:
-            tl, ta = evaluate(model, test_loader, device)
-            print(f"[Round {rnd}] Test loss={tl:.4f} acc={ta:.4f}")
+    run_fedavg_parallel(model, id_map, num_clients, num_classes, test_loader, device)
 
     # Avaliação final
     tl, ta = evaluate(model, test_loader, device)
     print(f"[FINAL] Test loss={tl:.4f} acc={ta:.4f}")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -374,9 +413,11 @@ if __name__ == "__main__":
     parser.add_argument("--frac", type=float, default=CFG.frac_clients)
     parser.add_argument("--epochs", type=int, default=CFG.local_epochs)
     parser.add_argument("--width-mult", type=float, default=CFG.width_mult)
+    parser.add_argument("--concurrency", type=int, default=CFG.concurrent_clients)
     args = parser.parse_args()
     CFG.rounds = args.rounds
     CFG.frac_clients = args.frac
     CFG.local_epochs = args.epochs
     CFG.width_mult = args.width_mult
+    CFG.concurrent_clients = args.concurrency
     main()
