@@ -22,8 +22,6 @@ for i in {1..5}; do
   echo "Criando perfis"
   python gen_sim_profile.py --seed $i
 
-  for alpha in 0.1 0.3 1.0; do
-    echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150"
+  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150"
   done
 done
