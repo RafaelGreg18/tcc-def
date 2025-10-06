@@ -10,7 +10,7 @@ Avaliação:
 Exp - 1 (model):
     - Baselines:
         - Shufflenet: concluído
-        - Mobilenet: constant+aff+hetaff(andamento)+critical(andamento)
+        - Mobilenet: constant+aff(por fazer)+hetaff(por fazer)+critical(andamento)
         - Resnext: constant
 Exp - 2 (selection):
     - Baselines:
