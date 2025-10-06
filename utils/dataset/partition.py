@@ -386,7 +386,7 @@ class DatasetFactory:
             # Encode (single-proc, estável e cacheável)
             partition = partition.map(
                 encode_batch,
-                num_proc=1,
+                num_proc=5,
                 remove_columns=remove_cols,
                 load_from_cache_file=True,
                 desc=f"Encode p{partition_id}",
@@ -401,7 +401,7 @@ class DatasetFactory:
             if len(silence_dataset) > 0:
                 silence_enc = silence_dataset.map(
                     encode_batch,
-                    num_proc=1,
+                    num_proc=5,
                     remove_columns=remove_cols,
                     load_from_cache_file=True,
                     desc=f"Encode silence p{partition_id}",
@@ -523,7 +523,7 @@ class DatasetFactory:
             # Encode teste (single-proc)
             test_ds = test_ds.map(
                 encode_batch,
-                num_proc=1,
+                num_proc=5,
                 remove_columns=remove_cols,
                 load_from_cache_file=True,
                 desc="Encode test",
