@@ -8,6 +8,9 @@ fi
 
 export CUDA_VISIBLE_DEVICES=$1
 
+export RAY_memory_usage_threshold=0.99
+export RAY_memory_monitor_refresh_ms=0
+
 # Goes to python dir
 cd "../../"
 
