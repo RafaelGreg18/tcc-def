@@ -8,6 +8,10 @@ fi
 
 export CUDA_VISIBLE_DEVICES=$1
 
+# ray config
+export RAY_memory_usage_threshold=0.99
+export RAY_memory_monitor_refresh_ms=0
+
 # Goes to python dir
 cd "../../"
 
@@ -22,8 +26,6 @@ for i in {1..5}; do
   echo "Criando perfis"
   python gen_sim_profile.py --seed $i
 
-  for alpha in 0.1 0.3 1.0; do
-    echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='criticalfl' is-critical=true"
+  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='criticalfl' is-critical=true"
   done
 done
