@@ -515,7 +515,7 @@ class DatasetFactory:
             g = torch.Generator()
             g.manual_seed(seed)
             return DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0,
-                              worker_init_fn=seed_worker, generator=g)
+                              worker_init_fn=seed_worker, generator=g), None
         elif dataset_id == "speech_commands":
             remove_cols = "file,audio,label,is_unknown,speaker_id,utterance_id".split(",")
             fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
@@ -556,4 +556,4 @@ class DatasetFactory:
                 generator=g,
                 drop_last=False,
                 collate_fn=crnn_collate,
-            )
+            ), None
