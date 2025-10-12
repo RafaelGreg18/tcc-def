@@ -120,7 +120,6 @@ class FedAvgOortConstant(BaseStrategy):
             round_utility = 0.0
             for _, res in results:
                 cid = int(res.metrics["cid"])
-                print(f"Cid: {cid} Util: {res.metrics['stat_util']}")
                 self.profiles[cid]['utility'] = self.calc_client_util(cid, res.metrics["stat_util"], server_round)
                 round_utility += res.metrics["stat_util"]
 
@@ -179,19 +178,14 @@ class FedAvgOortConstant(BaseStrategy):
             sample_size - len(self.unexplored_clients),
         )
 
-        print(f"exploited_clients_count: {exploited_clients_count}")
-
         available_cids.sort(key=lambda x: x[0], reverse=True)
-        print(f"available_cids: {available_cids}")
 
         sorted_by_utility = [cid for utility, cid in available_cids]
-        print(f"sorted_by_utility: {sorted_by_utility}")
 
         # Calculate cut-off utility
         cut_off_util = (
                 self.profiles[sorted_by_utility[exploited_clients_count - 1]]['utility'] * self.cut_off
         )
-        print(f"cut_off_util: {cut_off_util}")
 
         # Include clients with utilities higher than the cut-off
         exploited_clients = []
@@ -201,8 +195,6 @@ class FedAvgOortConstant(BaseStrategy):
                     and client_id not in self.blacklist
             ):
                 exploited_clients.append(client_id)
-
-        print(f"exploited_clients: {exploited_clients}")
 
         # Sample clients with their utilities
         total_utility = float(
@@ -257,8 +249,6 @@ class FedAvgOortConstant(BaseStrategy):
 
         for client in selected_clients:
             self.profiles[client]['times_selected'] += 1
-
-        print(f"selected_clients: {len(selected_clients)}")
 
         return selected_clients
 
