@@ -27,5 +27,4 @@ for i in {1..5}; do
   python gen_sim_profile.py --seed $i
 
   flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150"
-  done
 done

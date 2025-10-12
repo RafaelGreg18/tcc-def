@@ -1,5 +1,3 @@
-import json
-
 import torch
 from flwr.client import NumPyClient
 from flwr.common import NDArrays, Scalar
@@ -24,8 +22,8 @@ class BaseClient(NumPyClient):
             set_weights(self.model, parameters)
             # samples_per_class = self.count_samples_per_class(self.dataloader)
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
-                                                                           "loss": 0, "acc": 0, "stat_util": 0,}
-                                                                           # "samples_per_class": samples_per_class}
+                                                                           "loss": 0, "acc": 0, "stat_util": 0, }
+            # "samples_per_class": samples_per_class}
         else:
             # update model weights
             set_weights(self.model, parameters)
@@ -47,8 +45,8 @@ class BaseClient(NumPyClient):
 
             return get_weights(self.model), len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                                            "loss": avg_loss, "acc": avg_acc,
-                                                                           "stat_util": stat_util,}
-                                                                           # "samples_per_class": json.dumps(samples_per_class)}
+                                                                           "stat_util": stat_util, }
+            # "samples_per_class": json.dumps(samples_per_class)}
 
     def evaluate(self, parameters, config):
         if int(config["server_round"]) > 1:
@@ -60,7 +58,6 @@ class BaseClient(NumPyClient):
             return avg_loss, len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                             "loss": avg_loss, "acc": avg_acc, "stat_util": stat_util}
         else:
-
             return 0.0, len(self.dataloader.dataset), {"cid": self.cid, "flwr_cid": self.flwr_cid,
                                                        "loss": 0, "acc": 0, "stat_util": 0}
 
@@ -78,4 +75,3 @@ class BaseClient(NumPyClient):
             counts += torch.bincount(y, minlength=num_classes)
 
         return counts.tolist()
-

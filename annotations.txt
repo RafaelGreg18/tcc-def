@@ -10,7 +10,7 @@ Avaliação:
 Exp - 1 (model):
     - Baselines:
         - Shufflenet: concluído
-        - Mobilenet: constant+aff(por fazer)+hetaff(por fazer)+critical(andamento)
+        - Mobilenet: constant+aff(andamento)+hetaff(andamento)+critical(andamento)
         - Resnext: constant
 Exp - 2 (selection):
     - Baselines:
@@ -18,5 +18,19 @@ Exp - 3 (aggregation):
     - Coletar consumo (A depender do colext)
     - Baselines:
 Exp - 4 (problem):
-    * Retestar Audio problem (Andamento) - Coletar consumo
     - Baselines: Shakespeare (Andamento) + SpeechCommands
+
+Minha solução:
+-Sem budget:
+No caderno.
+
+-Com budget:
+- Assume-se três budgets: pior caso, melhor caso e caso médio. Seleção constante de clientes.
+- Cliente informa a quantidade inicial, que se assume ser o valor da estratégia constante.
+- Enquanto FGN não estabiliza, ou magnitude da derivada, mantém-se a estratégia selecionando com uma política econômica.
+- Ao alcançar a estabilidade, o cliente muda a política para o valor constante.
+- A depender da quantidade de energia economizada e de quantas rodadas faltam para o final, o cliente começa a aumentar
+a quantidade de clientes selecionados. Pensei em uma regra de ouro...
+- Se a subida de platô não produzir melhoria no desempenho, voltar para a quantidade de clientes que primeiro produziu
+o resultado.
+- Recalcular a sequência a cada rodada depois que iniciou a subida, para atualizar o consumo do budget.
