@@ -217,8 +217,8 @@ class BaseStrategy(Strategy):
         # Get for each selected client energy and carbon footprint
         selected_cids_training_dataset_size = get_selected_cids_and_local_training_data_size(results)
         epochs = int(self.context.run_config["epochs"])
-        model_size = int(self.context.run_config["model-size"])
-        num_transmited_bytes = len(selected_cids_training_dataset_size) * model_size + model_size
+        model_size = int(self.context.run_config["model-size"]) #bits
+        num_transmited_bytes = 2 * model_size//8 * len(selected_cids_training_dataset_size)
         selected_cids_training_time, max_comm_round_time = get_training_time_per_cid(self.profiles,
                                                                                      selected_cids_training_dataset_size,
                                                                                      model_size, epochs)

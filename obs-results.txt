@@ -1,0 +1,4 @@
+Gráfico de rede:
+    -> Quantidade de bytes transmitida modificada.
+        Antes: 1 Broadcast + N Unicast em Bits <- apesar de rotulados como bytes no resultado
+        Atual: consertado pra bytes e todas unicast 2*Qtd Participantes*Modelo em bytes
