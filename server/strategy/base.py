@@ -188,6 +188,8 @@ class BaseStrategy(Strategy):
             self.num_failures = len(failures)
             # Saving systemic values
             self.save_round_system_metrics(cids_carbon_footprint, cids_joules_consumption,
+                                           selected_cids_training_carbon_footprint, selected_cids_training_joules_consumption,
+                                           unselected_cids_training_carbon_footprint, unselected_cids_training_joules_consumption,
                                            num_depleted, num_expired_thresh, num_transmited_bytes, server_round)
 
         if self.use_battery:
@@ -304,10 +306,16 @@ class BaseStrategy(Strategy):
             with open(self.fl_cli_state_path, "w") as json_file:
                 json.dump(self.client_state_to_save, json_file, indent=2)
 
-    def save_round_system_metrics(self, cids_carbon_footprint, cids_joules_consumption,
+    def save_round_system_metrics(self, all_cids_carbon_footprint, all_cids_joules_consumption,
+                                  selected_cids_carbon_footprint, selected_cids_joules_consumption,
+                                  unselected_cids_carbon_footprint, unselected_cids_joules_consumption,
                                   num_depleted, num_expired_thresh, num_transmited_bytes, server_round):
-        my_results = {"total_mJ": sum(cids_joules_consumption.values()),
-                      "total_ceq": sum(cids_carbon_footprint.values()),
+        my_results = {"total_mJ": sum(all_cids_joules_consumption.values()),
+                      "total_ceq": sum(all_cids_carbon_footprint.values()),
+                      "selected_mJ":sum(selected_cids_joules_consumption.values()),
+                      "unselected_mJ":sum(unselected_cids_joules_consumption.values()),
+                      "selected_ceq":sum(selected_cids_carbon_footprint.values()),
+                      "unselected_ceq":sum(unselected_cids_carbon_footprint.values()),
                       "num_expired_thresh": num_expired_thresh,
                       "num_depleted": num_depleted,
                       "num_transmited_bytes": num_transmited_bytes,
