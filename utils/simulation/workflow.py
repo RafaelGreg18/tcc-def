@@ -21,6 +21,7 @@ from server.strategy.fedavg_random_constant_delayed import FedAvgRandomConstantD
 from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstantTwoPhase
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
+from server.strategy.fedavg_random_dynff import FedAvgRandomDynff
 from server.strategy.fedavg_random_hetaaff import FedAvgRandomHETAAFF
 from server.strategy.fedavg_random_recombination import FedAvgRandomRecombination
 from server.strategy.feddyn_random_aff import FedDynRandomAFF
@@ -208,6 +209,7 @@ STRATEGY_REGISTRY = {
     ("fedavg", "random", "hetaaff"): FedAvgRandomHETAAFF,
     ("fedavg", "random", "recombination"): FedAvgRandomRecombination,
     ("fedavg", "random", "delayed"): FedAvgRandomConstantDelayed,
+    ("fedavg", "random", "dynff"): FedAvgRandomDynff,
 
     ("fedavg", "oort", "constant"): FedAvgOortConstant,
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
@@ -228,6 +230,7 @@ STRATEGY_REGISTRY = {
     ("feddyn", "random", "criticalfl"): FedDynRandomCriticalFL,
     ("feddyn", "random", "aff"): FedDynRandomAFF,
     ("feddyn", "random", "hetaaff"): FedDynRandomHETAAFF,
+
 }
 
 

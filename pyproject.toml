@@ -139,6 +139,9 @@ proximal-mu = 2.0
 # feddyn
 alpha-coef = 1e-2
 
+#dynff
+start-obs = 2
+
 [tool.flwr.federations]
 default = "local-simulation"
 
