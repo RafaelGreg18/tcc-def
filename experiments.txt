@@ -4,44 +4,5 @@ Exp-3
 Exp-4
 In-Progress:
 Exp-1:
-    - In-Progress: const-shuffle, const-mobile, const-aff
+    - In-Progress: const-shuffle, const-mobile, const-aff, const-hetaaff
 Done:
-
-
-# ------------------------ Função wrapper de alta prioridade (compatível) -------
-run_hp() {
-  case "${HIGH_PRIO_MODE}" in
-    rt)
-      if command -v chrt >/dev/null 2>&1; then
-        if [[ $(id -u) -eq 0 ]] || sudo -n true 2>/dev/null; then
-          ${SUDO:-sudo} chrt --rr "${RT_PRIO}" ionice -c2 -n0 taskset -c "${ALLOWED_CPUS}" "$@"
-          return
-        else
-          echo "Aviso: modo rt requer root/sudo. Caindo para 'batch'." >&2
-        fi
-      fi
-      ;;&  # se RT não rolou, cai para os próximos modos
-
-    service)
-      if command -v systemd-run >/dev/null 2>&1; then
-        # Service transitório: usa Nice/weights; afinidade via taskset dentro
-        systemd-run --user --quiet --collect --same-dir \
-          -p Nice=-5 -p CPUWeight="${CPU_WEIGHT}" -p IOWeight="${IO_WEIGHT}" \
-          bash -lc 'exec ionice -c2 -n0 taskset -c "$ALLOWED_CPUS" "$@"' _ "$@"
-        return
-      fi
-      ;;&
-
-    batch|*)
-      if command -v systemd-run >/dev/null 2>&1; then
-        # Scope: só weights; afinidade via taskset dentro
-        systemd-run --user --quiet --collect --same-dir --scope \
-          -p CPUWeight="${CPU_WEIGHT}" -p IOWeight="${IO_WEIGHT}" \
-          bash -lc 'exec nice -n -5 ionice -c2 -n0 taskset -c "$ALLOWED_CPUS" "$@"' _ "$@"
-      else
-        # Sem systemd-run: faz tudo localmente
-        taskset -c "${ALLOWED_CPUS}" nice -n -5 ionice -c2 -n0 "$@"
-      fi
-      ;;
-  esac
-}
