@@ -55,6 +55,7 @@ class BaseStrategy(Strategy):
         self.system_metrics_to_save = {}
         self.model_performance_path = None
         self.performance_metrics_to_save = {}
+        self.all_selected_clients_consumption = []
 
     def __repr__(self) -> str:
         return self.repr
@@ -173,6 +174,9 @@ class BaseStrategy(Strategy):
              selected_cids_training_joules_consumption, selected_cids_training_carbon_footprint,
              unselected_cids_training_joules_consumption, unselected_cids_training_carbon_footprint,
              max_comm_round_time, num_transmited_bytes) = self.get_cids_joules_and_carbon(results)
+
+            for key, value in selected_cids_training_joules_consumption.items():
+                self.all_selected_clients_consumption.append(value)
 
             if self.use_battery:
                 # 2. Update profiles

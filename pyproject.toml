@@ -49,11 +49,11 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
-#model-name = "Shufflenet_v2_x0_5"
-model-name = "simplecnn"
+model-name = "Shufflenet_v2_x0_5"
+#model-name = "simplecnn"
 # shape
-input-shape = "(3, 32, 32)"
-#input-shape = "(3,224,224)"
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
 # model independent
@@ -140,7 +140,21 @@ proximal-mu = 2.0
 alpha-coef = 1e-2
 
 #dynff
-start-obs = 2
+# using stablization
+start-exp-round = -1 # -1 to auto operation
+# stablization verification
+start-obs = 20
+W=10
+K=5
+delta=1e-2
+method = "huber"
+start-after=20
+smoothing-alpha = 0.1
+# participants are constant by acks rounds
+acks = 3
+# control scheduling
+scheduling-gamma = 0.618 # Default: 0.618
+bud-percentual = 1.0 # default: 1.0
 
 [tool.flwr.federations]
 default = "local-simulation"
