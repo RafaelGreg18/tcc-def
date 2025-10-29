@@ -528,12 +528,12 @@ def select_network_speeds(
 
     return profiles
 
-def assign_client_profiles(device_profiles, num_clients, mode="equal", *, allowed_devices=None, speed_key="training_ms",
+def assign_client_profiles(device_profiles, num_clients, mode="EQUAL", *, allowed_devices=None, speed_key="training_ms",
                            gamma=1.0, seed=0):
     rng = np.random.default_rng(seed)
     devs = list(device_profiles.keys()) if allowed_devices is None else [d for d in allowed_devices if
                                                                          d in device_profiles]
-    if mode == "equal":
+    if mode == "EQUAL":
         m = len(devs)
         base = num_clients // m
         rem = num_clients - base * m
@@ -549,7 +549,7 @@ def assign_client_profiles(device_profiles, num_clients, mode="equal", *, allowe
         return out
     else:
         speeds = np.array([max(1e-9, float(device_profiles[d][speed_key])) for d in devs])
-        if mode == "fast":
+        if mode == "FAST":
             w = (1.0 / speeds) ** float(gamma)
         else:
             w = (speeds) ** float(gamma)

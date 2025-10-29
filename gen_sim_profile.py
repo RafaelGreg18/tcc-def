@@ -41,7 +41,7 @@ def main():
     profiles = create_profiles(num_clients, seed, devices_profile_path, model_name, net_speed_path, carbon_data_path,
                                prefer_time, prefer_battery, prefer_carbon, kj_low, kj_medium, kj_high, carbon_region,
                                net_scenario)
-
+    #
     pro_files = cfg["root-profiles-dir"] + f"profiles_{model_name}.json"
 
     with open(pro_files, "w") as file:
