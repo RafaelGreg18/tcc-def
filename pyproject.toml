@@ -49,13 +49,14 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Resnext50_32x4d"
 # "Lstm"
 # "CRNNResNetAttn"
+# KWT
 model-name = "Shufflenet_v2_x0_5"
 #model-name = "simplecnn"
 # shape
 #input-shape = "(3, 32, 32)"
 input-shape = "(3,224,224)"
 # classes
-num-classes = 10 #CRNNResNetAttn: 12 Lstm: - Others: 10
+num-classes = 10 #KWT: 36 Lstm: - Others: 10
 # model independent
 epochs = 10 #real deploy: 5
 learning-rate = 1e-2 #CRNNResNetAttn: 3e-4 Others: 1e-3
