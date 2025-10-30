@@ -37,10 +37,11 @@ def main():
 
     net_scenario = cfg["net-scenario"]
     model_name = cfg["model-name"]
+    aggregation_name = cfg["aggregation-name"]
 
     profiles = create_profiles(num_clients, seed, devices_profile_path, model_name, net_speed_path, carbon_data_path,
                                prefer_time, prefer_battery, prefer_carbon, kj_low, kj_medium, kj_high, carbon_region,
-                               net_scenario)
+                               net_scenario, aggregation_name)
     #
     pro_files = cfg["root-profiles-dir"] + f"profiles_{model_name}.json"
 
