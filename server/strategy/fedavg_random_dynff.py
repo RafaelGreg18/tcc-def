@@ -93,8 +93,8 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
             num_eco = ((server_round - 1) * self.initial_num_participants) - sum(self.num_selected)
 
             if num_eco > 0:
-                self.additions = schedule_additions(self.state["e_bud"] * self.bud_percentual,
-                                                    avg_j_consumption * num_eco,
+                self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
+                                                    avg_j_consumption,
                                                     self.num_rounds, server_round, gamma=self.scheduling_gamma)
             else:
                 self.additions = [0] * (self.num_rounds - server_round)
@@ -148,10 +148,16 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
                 self.state["stable"] = True
                 self.state["stable_round"] = resp
                 self.state["plan"] = Plans.EXP
+
                 avg_j_consumption = sum(self.all_selected_clients_consumption) / len(
                     self.all_selected_clients_consumption)
+                num_eco = ((server_round - 1) * self.initial_num_participants) - sum(self.num_selected)
 
-                self.additions = schedule_additions(self.state["e_bud"] * self.bud_percentual, avg_j_consumption,
-                                                    self.num_rounds, resp, gamma=self.scheduling_gamma)
+                if num_eco > 0:
+                    self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
+                                                        avg_j_consumption,
+                                                        self.num_rounds, server_round, gamma=self.scheduling_gamma)
+                else:
+                    self.additions = [0] * (self.num_rounds - server_round)
 
                 return True
