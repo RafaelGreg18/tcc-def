@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 
 import numpy as np
 import torch
+import torchaudio
 from datasets import Dataset as ArrowDataset
 from datasets import DownloadConfig, concatenate_datasets, Dataset
 from flwr_datasets import FederatedDataset
@@ -27,119 +28,78 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 # Opção simples/estável: desabilitar multiprocessing do datasets.map
 os.environ.setdefault("HF_DATASETS_DISABLE_MULTIPROCESSING", "1")
 
-# Se você QUISER multiprocessing sem travar, comente a linha acima e habilite forkserver:
-# os.environ.setdefault("HF_DATASETS_MULTIPROCESSING_METHOD", "forkserver")
-# import multiprocessing as mp
-# mp.set_start_method("forkserver", force=True)
-
 # ----------------------------------------------------------------------
-# Áudio / Whisper: processor lazy (um por processo) + encode_batch de topo
-# ----------------------------------------------------------------------
-_PROCESSOR = None
-
-
-def get_processor():
-    """Instancia (lazy) o WhisperProcessor uma única vez por processo."""
-    global _PROCESSOR
-    if _PROCESSOR is None:
-        from transformers import WhisperProcessor
-        _PROCESSOR = WhisperProcessor.from_pretrained("openai/whisper-tiny")
-    return _PROCESSOR
-
-
-def encode_batch(batch):
-    """Codifica um exemplo do Speech Commands para log-mel + alvo (12 classes).
-
-    Retorna dicionário com estruturas Python/NumPy (compatíveis com Arrow):
-      - data: [80, T]
-      - targets: int (0..11), onde:
-          11 -> unknown
-          10 -> silence (label==35)
-          0..9 -> keywords
-    """
-    proc = get_processor()
-    audio = batch["audio"]
-    feats = proc(
-        audio["array"], sampling_rate=audio["sampling_rate"], return_tensors=None
-    )["input_features"]  # lista/np.ndarray shape [1, 80, T]
-    x = feats[0]  # [80, T]
-    target = 11 if batch["is_unknown"] else (10 if batch["label"] == 35 else batch["label"])
-    return {"data": x, "targets": int(target)}
-
-
-# ----------------------------------------------------------------------
-# Collate para CRNN (padding temporal + limpeza)
+# Áudio
 # ----------------------------------------------------------------------
 
-N_MELS = 80
+# Speech Commands é 16 kHz; entradas são ~1s (ajustamos por pad/crop). :contentReference[oaicite:1]{index=1}
+SAMPLE_RATE = 16_000
+N_MELS = 40
+HOP = 160  # ~10ms
+WIN = 400  # ~25ms
+N_FFT = 400
+TARGET_T = 98  # KWT usa 40x98 (freq x tempo). :contentReference[oaicite:2]{index=2}
+
+_melspec = torchaudio.transforms.MelSpectrogram(
+    sample_rate=SAMPLE_RATE, n_fft=N_FFT, win_length=WIN, hop_length=HOP,
+    n_mels=N_MELS, f_min=20.0, f_max=SAMPLE_RATE / 2, center=True, power=2.0
+)
+_amptodb = torchaudio.transforms.AmplitudeToDB(stype="power")
 
 
-def crnn_collate(batch, pad_value: float = 0.0):
-    """
-    batch: lista de dicts {"data": [80,T] ou [1,80,T], "targets": int}
-    retorna:
-      {"data": [B,1,80,Tmax], "targets": LongTensor[B]}
-    descarta amostras inválidas / T<=0.
-    """
-    clean = []
-    for ex in batch:
-        if ex is None:
-            continue
-        x = ex.get("data", None)
-        y = ex.get("targets", None)
-        if x is None or y is None:
-            continue
-        x = torch.as_tensor(x)
+def wav_to_logmel_40x98(wav: np.ndarray) -> torch.Tensor:
+    """Converte wav (float np.array) em tensor (1, 40, 98) de log-Mel normalizado."""
+    x = torch.tensor(wav, dtype=torch.float32)
+    if x.ndim == 1:
+        x = x.unsqueeze(0)  # (1, T)
 
-        # normaliza para [80, T]
-        if x.ndim == 3 and x.shape[0] == 1:  # [1,80,T]
-            x = x.squeeze(0)
-        if x.ndim == 2 and x.shape[0] != N_MELS and x.shape[1] == N_MELS:
-            x = x.transpose(0, 1)  # [T,80] -> [80,T]
+    # pad/crop para 1.0s exatos
+    if x.shape[-1] < SAMPLE_RATE:
+        x = torch.nn.functional.pad(x, (0, SAMPLE_RATE - x.shape[-1]))
+    elif x.shape[-1] > SAMPLE_RATE:
+        x = x[..., :SAMPLE_RATE]
 
-        if x.ndim != 2 or x.shape[0] != N_MELS or x.shape[1] <= 0:
-            continue
-        if torch.isnan(x).any():
-            continue
+    mel = _melspec(x)  # (1, 40, ~98-101)
+    mel_db = _amptodb(mel)
 
-        clean.append({"data": x, "targets": int(y)})
+    # normalização por-utterance
+    m = mel_db.mean(dim=-1, keepdim=True)
+    s = mel_db.std(dim=-1, keepdim=True) + 1e-6
+    mel_db = (mel_db - m) / s
 
-    if len(clean) == 0:
-        return {"data": torch.empty(0, 1, N_MELS, 1), "targets": torch.empty(0, dtype=torch.long)}
+    # fixar T=98
+    T = mel_db.shape[-1]
+    if T < TARGET_T:
+        mel_db = torch.nn.functional.pad(mel_db, (0, TARGET_T - T))
+    elif T > TARGET_T:
+        mel_db = mel_db[..., :TARGET_T]
 
-    # padding temporal
-    seq = [ex["data"].transpose(0, 1).contiguous() for ex in clean]  # [T,80]
-    seq_pad = pad_sequence(seq, batch_first=True, padding_value=pad_value)  # [B,Tmax,80]
-    x_out = seq_pad.permute(0, 2, 1).unsqueeze(1).contiguous()  # [B,1,80,Tmax]
-    y_out = torch.tensor([ex["targets"] for ex in clean], dtype=torch.long)
-    return {"data": x_out, "targets": y_out}
+    return mel_db  # (1,40,98)
 
 
-# ----------------------------------------------------------------------
-# Geração de silêncios para train
-# ----------------------------------------------------------------------
-def prepare_silences_dataset(train_dataset, ratio_silence: float = 0.1) -> ArrowDataset:
-    """Extrai janelas de 1s dos 5 ruídos de fundo e cria exemplos 'silence'."""
-    silences = train_dataset.filter(lambda x: x["label"] == 35)
-    num_silence_total = int(len(train_dataset) * ratio_silence)
-    num_silence_per_bkg = max(1, num_silence_total // max(1, len(silences)))
+# --------------------------
+# Dataset wrapper (HF -> Torch)
+# --------------------------
+class HFAudioDataset(TorchDataset):
+    def __init__(self, hf_split):
+        self.ds = hf_split
 
-    silence_to_add = []
-    for sil in silences:
-        sil_array = sil["audio"]["array"]
-        sr = sil["audio"]["sampling_rate"]
-        for _ in range(num_silence_per_bkg):
-            if len(sil_array) <= sr + 1:
-                continue
-            random_offset = random.randint(0, len(sil_array) - sr - 1)
-            sil_array_crop = sil_array[random_offset: random_offset + sr]
-            entry = dict(sil)  # shallow copy
-            entry["audio"] = dict(entry["audio"])
-            entry["audio"]["array"] = sil_array_crop
-            silence_to_add.append(entry)
+    def __len__(self):
+        return len(self.ds)
 
-    return ArrowDataset.from_list(silence_to_add) if len(silence_to_add) > 0 else ArrowDataset.from_list([])
-
+    def __getitem__(self, idx):
+        # ex = self.ds[idx]
+        # wav = ex["audio"]["array"]  # HF já decodifica e garante 16kHz. :contentReference[oaicite:3]{index=3}
+        # y = int(ex["label"])
+        # x = wav_to_logmel_40x98(wav)  # (1,40,98)
+        # return x, y
+        idx = int(idx)  # garante índice escalar
+        ex = self.ds[idx]  # agora é UMA amostra (dict)
+        audio = ex["audio"]  # HF 'Audio' -> dict com array/sampling_rate
+        wav = audio["array"]  # numpy 1D
+        y = int(ex["label"])
+        x = wav_to_logmel_40x98(wav)
+        return x, y
 
 # ----------------------------------------------------------------------
 # Shakespeare (char-level)
@@ -378,70 +338,16 @@ class DatasetFactory:
     @classmethod
     def _get_audio_class_partition(cls, dataset_id, partition_id, batch_size, seed):
         if partition_id not in cls._fds_partition_cache:
-            remove_cols = "file,audio,label,is_unknown,speaker_id,utterance_id".split(",")
 
             fds = cls._get_federated_dataset(dataset_id, seed=seed)
             partition = fds.load_partition(partition_id)
 
-            # Encode (single-proc, estável e cacheável)
-            partition = partition.map(
-                encode_batch,
-                num_proc=5,
-                remove_columns=remove_cols,
-                load_from_cache_file=True,
-                desc=f"Encode p{partition_id}",
-            )
-
-            # Silences proporcionais ao tamanho da partição
-            partitioner = fds.partitioners["train"]
-            base_train = partitioner.dataset
-            ratio_silences_for_client = 0.1 * (len(partition) / max(1, len(base_train)))
-            silence_dataset = prepare_silences_dataset(base_train, ratio_silences_for_client)
-
-            if len(silence_dataset) > 0:
-                silence_enc = silence_dataset.map(
-                    encode_batch,
-                    num_proc=5,
-                    remove_columns=remove_cols,
-                    load_from_cache_file=True,
-                    desc=f"Encode silence p{partition_id}",
-                )
-                partition = concatenate_datasets([partition, silence_enc])
-
-            trainset = partition.with_format("python")
-
-            # Filtro defensivo [80,T>0]
-            def _ok(ex):
-                x = ex.get("data", None)
-                y = ex.get("targets", None)
-                if x is None or y is None:
-                    return False
-                arr = np.asarray(x)
-                if arr.ndim == 3 and arr.shape[0] == 1:
-                    arr = arr.squeeze(0)
-                if arr.ndim == 2 and arr.shape[1] == N_MELS:
-                    arr = arr.transpose(1, 0)
-                return (arr.ndim == 2 and arr.shape[0] == N_MELS and arr.shape[1] > 0)
-
-            trainset = trainset.filter(_ok, num_proc=1)
-
-            # Sampler balanceado
-            sampler = None
-            if len(trainset) > batch_size:
-                y = np.asarray(trainset["targets"], dtype=np.int64)
-                hist = np.bincount(y, minlength=12)
-                w_per_class = 1.0 / np.maximum(hist, 1)
-                w_ss = w_per_class[y]
-                sampler = WeightedRandomSampler(w_ss.tolist(), len(w_ss), replacement=True)
+            g = torch.Generator()
+            g.manual_seed(seed)
 
             trainloader = DataLoader(
-                trainset,
-                batch_size=batch_size,
-                shuffle=False,
-                sampler=sampler,
-                num_workers=0,
-                drop_last=False,
-                collate_fn=crnn_collate,
+                HFAudioDataset(partition), batch_size=batch_size,
+                shuffle=True, num_workers=0, worker_init_fn=seed_worker, generator=g
             )
 
             cls._fds_partition_cache[partition_id] = trainloader
@@ -517,43 +423,15 @@ class DatasetFactory:
             return DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=0,
                               worker_init_fn=seed_worker, generator=g), None
         elif dataset_id == "speech_commands":
-            remove_cols = "file,audio,label,is_unknown,speaker_id,utterance_id".split(",")
             fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
             test_ds = fds.load_split("test")
-            # Encode teste (single-proc)
-            test_ds = test_ds.map(
-                encode_batch,
-                num_proc=5,
-                remove_columns=remove_cols,
-                load_from_cache_file=True,
-                desc="Encode test",
-            )
-            test_ds = test_ds.with_format("python")
-
-            def _ok(ex):
-                x = ex.get("data", None)
-                y = ex.get("targets", None)
-                if x is None or y is None:
-                    return False
-                arr = np.asarray(x)
-                if arr.ndim == 3 and arr.shape[0] == 1:
-                    arr = arr.squeeze(0)
-                if arr.ndim == 2 and arr.shape[1] == N_MELS:
-                    arr = arr.transpose(1, 0)
-                return (arr.ndim == 2 and arr.shape[0] == N_MELS and arr.shape[1] > 0)
-
-            test_ds = test_ds.filter(_ok, num_proc=1)
 
             g = torch.Generator()
             g.manual_seed(seed)
 
-            return DataLoader(
-                test_ds,
-                batch_size=batch_size,
-                shuffle=False,  # Sampler controla a ordem
-                num_workers=0,  # comece com 0; aumente depois se quiser
-                worker_init_fn=seed_worker,
-                generator=g,
-                drop_last=False,
-                collate_fn=crnn_collate,
-            ), None
+            testloader = DataLoader(
+                HFAudioDataset(test_ds), batch_size=batch_size,
+                shuffle=True, num_workers=0, worker_init_fn=seed_worker, generator=g, drop_last=False
+            )
+
+            return testloader, None
