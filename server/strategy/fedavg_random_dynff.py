@@ -26,6 +26,7 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
         self.acks = int(self.context.run_config["acks"])  # change participantion only after #acks
         self.num_rounds = int(self.context.run_config["num-rounds"]) + 2
         self.additions = None
+        self.num_selected = []
 
         self.state = {
             "plan": Plans.ECO,
@@ -48,6 +49,7 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
         # Sample clients
         if 2 <= server_round <= 3:
             min_num_clients = sample_size = self.initial_num_participants
+            self.num_selected.append(sample_size)
         elif server_round > 3:
             if server_round % self.acks == 0 and not self.state["stable"]:
                 self.update_dynff(server_round)
@@ -57,6 +59,7 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
             sample_size, min_num_clients = self.num_fit_clients(
                 client_manager.num_available()
             )
+            self.num_selected.append(sample_size)
         else:
             sample_size, min_num_clients = self.num_fit_clients(
                 client_manager.num_available()
@@ -87,9 +90,14 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
             self.state["plan"] = Plans.EXP
             avg_j_consumption = sum(self.all_selected_clients_consumption) / len(
                 self.all_selected_clients_consumption)
+            num_eco = ((server_round - 1) * self.initial_num_participants) - sum(self.num_selected)
 
-            self.additions = schedule_additions(self.state["e_bud"] * self.bud_percentual, avg_j_consumption,
-                                                self.num_rounds, server_round, gamma=self.scheduling_gamma)
+            if num_eco > 0:
+                self.additions = schedule_additions(self.state["e_bud"] * self.bud_percentual,
+                                                    avg_j_consumption * num_eco,
+                                                    self.num_rounds, server_round, gamma=self.scheduling_gamma)
+            else:
+                self.additions = [0] * (self.num_rounds - server_round)
 
             return True
         else:

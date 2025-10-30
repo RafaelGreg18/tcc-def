@@ -50,11 +50,12 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "Lstm"
 # "CRNNResNetAttn"
 # KWT
-model-name = "Shufflenet_v2_x0_5"
-#model-name = "simplecnn"
+#model-name = "KWT"
+#model-name = "Shufflenet_v2_x0_5"
+model-name = "simplecnn"
 # shape
-#input-shape = "(3, 32, 32)"
-input-shape = "(3,224,224)"
+input-shape = "(3, 32, 32)"
+#input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #KWT: 36 Lstm: - Others: 10
 # model independent
@@ -154,7 +155,7 @@ smoothing-alpha = 0.1
 # participants are constant by acks rounds
 acks = 3
 # control scheduling
-scheduling-gamma = 0.618 # Default: 0.618
+scheduling-gamma = 0.1 # Default: 0.618
 bud-percentual = 1.0 # default: 1.0
 
 [tool.flwr.federations]
