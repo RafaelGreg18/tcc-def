@@ -96,6 +96,11 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
                 self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
                                                     avg_j_consumption,
                                                     self.num_rounds, server_round, gamma=self.scheduling_gamma)
+                size_diff = (self.num_rounds - server_round) - len(self.additions)
+                if size_diff > 0:
+                    to_add = self.additions[-1]
+                    for i in range(size_diff):
+                        self.additions.append(to_add)
             else:
                 self.additions = [0] * (self.num_rounds - server_round)
 
@@ -157,6 +162,11 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
                     self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
                                                         avg_j_consumption,
                                                         self.num_rounds, server_round, gamma=self.scheduling_gamma)
+                    size_diff = (self.num_rounds - server_round) - len(self.additions)
+                    if  size_diff > 0:
+                        to_add = self.additions[-1]
+                        for i in range(size_diff):
+                            self.additions.append(to_add)
                 else:
                     self.additions = [0] * (self.num_rounds - server_round)
 
