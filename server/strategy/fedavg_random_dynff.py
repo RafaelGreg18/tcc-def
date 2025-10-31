@@ -24,7 +24,7 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
         self.start_after = int(self.context.run_config["start-after"])
         self.c_rates = []  # how to change currente participants
         self.acks = int(self.context.run_config["acks"])  # change participantion only after #acks
-        self.num_rounds = int(self.context.run_config["num-rounds"]) + 2
+        self.num_rounds = int(self.context.run_config["num-rounds"]) + 1
         self.additions = None
         self.num_selected = []
 
@@ -95,14 +95,14 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
             if num_eco > 0:
                 self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
                                                     avg_j_consumption,
-                                                    self.num_rounds, server_round, gamma=self.scheduling_gamma)
-                size_diff = (self.num_rounds - server_round) - len(self.additions)
+                                                    self.num_rounds + 1, server_round, gamma=self.scheduling_gamma)
+                size_diff = (self.num_rounds + 1 - server_round) - len(self.additions)
                 if size_diff > 0:
                     to_add = self.additions[-1]
                     for i in range(size_diff):
                         self.additions.append(to_add)
             else:
-                self.additions = [0] * (self.num_rounds - server_round)
+                self.additions = [0] * (self.num_rounds + 1 - server_round)
 
             return True
         else:
@@ -161,13 +161,13 @@ class FedAvgRandomDynff(FedAvgRandomConstant):
                 if num_eco > 0:
                     self.additions = schedule_additions(avg_j_consumption * num_eco * self.bud_percentual,
                                                         avg_j_consumption,
-                                                        self.num_rounds, server_round, gamma=self.scheduling_gamma)
-                    size_diff = (self.num_rounds - server_round) - len(self.additions)
+                                                        self.num_rounds + 1, server_round, gamma=self.scheduling_gamma)
+                    size_diff = (self.num_rounds + 1 - server_round) - len(self.additions)
                     if  size_diff > 0:
                         to_add = self.additions[-1]
                         for i in range(size_diff):
                             self.additions.append(to_add)
                 else:
-                    self.additions = [0] * (self.num_rounds - server_round)
+                    self.additions = [0] * (self.num_rounds + 1 - server_round)
 
                 return True
