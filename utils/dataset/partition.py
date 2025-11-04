@@ -42,64 +42,81 @@ TARGET_T = 98  # KWT usa 40x98 (freq x tempo). :contentReference[oaicite:2]{inde
 
 _melspec = torchaudio.transforms.MelSpectrogram(
     sample_rate=SAMPLE_RATE, n_fft=N_FFT, win_length=WIN, hop_length=HOP,
-    n_mels=N_MELS, f_min=20.0, f_max=SAMPLE_RATE / 2, center=True, power=2.0
+    n_mels=N_MELS, f_min=20.0, f_max=SAMPLE_RATE / 2, center=False, power=2.0
 )
-_amptodb = torchaudio.transforms.AmplitudeToDB(stype="power")
-
+_amptodb = torchaudio.transforms.AmplitudeToDB(stype="power", top_db=80)
 
 def wav_to_logmel_40x98(wav: np.ndarray) -> torch.Tensor:
-    """Converte wav (float np.array) em tensor (1, 40, 98) de log-Mel normalizado."""
+    """
+    Converte um wav (np.float, 16 kHz) em um tensor (1, 40, 98) de log-Mel normalizado
+    por enunciado (Z-score ao longo do tempo), pronto para o KWT (patch 40x1).
+
+    Requisitos:
+      - _melspec: torchaudio.transforms.MelSpectrogram configurado para 40 mels
+      - _amptodb: torchaudio.transforms.AmplitudeToDB(stype="power")
+      - SAMPLE_RATE = 16_000, TARGET_T = 98
+    """
+    # (1) para tensor float32 e garante dimensão de canal (1, T)
     x = torch.tensor(wav, dtype=torch.float32)
     if x.ndim == 1:
         x = x.unsqueeze(0)  # (1, T)
 
-    # pad/crop para 1.0s exatos
+    # (2) pad/crop no domínio do tempo para 1.0 s exatos
     if x.shape[-1] < SAMPLE_RATE:
         x = torch.nn.functional.pad(x, (0, SAMPLE_RATE - x.shape[-1]))
     elif x.shape[-1] > SAMPLE_RATE:
         x = x[..., :SAMPLE_RATE]
 
-    mel = _melspec(x)  # (1, 40, ~98-101)
-    mel_db = _amptodb(mel)
+    # (3) Mel + dB (o número de quadros depende do 'center' do _melspec)
+    mel = _melspec(x)          # (1, 40, ~98-101)
+    mel_db = _amptodb(mel)     # log-Mel
 
-    # normalização por-utterance
+    # (4) normalização por enunciado (por-bin de mel ao longo do tempo)
     m = mel_db.mean(dim=-1, keepdim=True)
     s = mel_db.std(dim=-1, keepdim=True) + 1e-6
     mel_db = (mel_db - m) / s
 
-    # fixar T=98
+    # (5) força T=98 com pad/trunc se necessário (robustez independente de 'center')
     T = mel_db.shape[-1]
     if T < TARGET_T:
         mel_db = torch.nn.functional.pad(mel_db, (0, TARGET_T - T))
     elif T > TARGET_T:
         mel_db = mel_db[..., :TARGET_T]
 
-    return mel_db  # (1,40,98)
+    return mel_db  # (1, 40, 98)
 
+class LabelMapper:
+    """Mapeia nomes -> ids ignorando '_silence_' (35 classes p/ KWT)."""
+    def __init__(self, all_names: List[str]):
+        self.keep = [n for n in all_names if n != "_silence_"]
+        self.name_to_id = {n: i for i, n in enumerate(self.keep)}
+
+    def __len__(self): return len(self.keep)
+    def encode(self, name: str) -> int: return self.name_to_id[name]
 
 # --------------------------
 # Dataset wrapper (HF -> Torch)
 # --------------------------
 class HFAudioDataset(TorchDataset):
-    def __init__(self, hf_split):
+    def __init__(self, hf_split, label_names):
         self.ds = hf_split
+        self.lm = LabelMapper(label_names)
+        self.names = label_names
+
+        self._idx = [i for i in range(len(self.ds))
+                     if self.names[int(self.ds[i]["label"])] != "_silence_"]
 
     def __len__(self):
-        return len(self.ds)
+        return len(self._idx)
 
     def __getitem__(self, idx):
-        # ex = self.ds[idx]
-        # wav = ex["audio"]["array"]  # HF já decodifica e garante 16kHz. :contentReference[oaicite:3]{index=3}
-        # y = int(ex["label"])
-        # x = wav_to_logmel_40x98(wav)  # (1,40,98)
-        # return x, y
-        idx = int(idx)  # garante índice escalar
-        ex = self.ds[idx]  # agora é UMA amostra (dict)
-        audio = ex["audio"]  # HF 'Audio' -> dict com array/sampling_rate
-        wav = audio["array"]  # numpy 1D
-        y = int(ex["label"])
-        x = wav_to_logmel_40x98(wav)
-        return x, y
+        ex = self.ds[self._idx[int(idx)]]
+        wav = ex["audio"]["array"]  # numpy 1D @16 kHz (HF Audio)
+        y_name = self.names[int(ex["label"])]  # string do rótulo
+        y = self.lm.encode(y_name)  # 0..34
+
+        x = wav_to_logmel_40x98(wav)  # sua função original
+        return x, int(y)
 
 # ----------------------------------------------------------------------
 # Shakespeare (char-level)
@@ -340,13 +357,16 @@ class DatasetFactory:
         if partition_id not in cls._fds_partition_cache:
 
             fds = cls._get_federated_dataset(dataset_id, seed=seed)
-            partition = fds.load_partition(partition_id)
+            partition = fds.load_partition(partition_id, split="train")
+
+            #improving acc
+            label_names = partition.features["label"].names
 
             g = torch.Generator()
             g.manual_seed(seed)
 
             trainloader = DataLoader(
-                HFAudioDataset(partition), batch_size=batch_size,
+                HFAudioDataset(partition, label_names), batch_size=batch_size,
                 shuffle=True, num_workers=0, worker_init_fn=seed_worker, generator=g
             )
 
@@ -426,11 +446,14 @@ class DatasetFactory:
             fds = cls._get_federated_dataset(dataset_id, num_partitions, alpha, seed)
             test_ds = fds.load_split("test")
 
+            # improving acc
+            label_names = test_ds.features["label"].names
+
             g = torch.Generator()
             g.manual_seed(seed)
 
             testloader = DataLoader(
-                HFAudioDataset(test_ds), batch_size=batch_size,
+                HFAudioDataset(test_ds, label_names), batch_size=batch_size,
                 shuffle=True, num_workers=0, worker_init_fn=seed_worker, generator=g, drop_last=False
             )
 
