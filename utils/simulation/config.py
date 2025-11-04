@@ -91,7 +91,7 @@ class ConfigRepository:
         cfg["batch-size"] = int(cfg["batch-size"])
 
         # model
-        cfg["input-shape"] = ast.literal_eval(cfg["input-shape"])
+        cfg["input-shape"] = ast.literal_eval(cfg["input-shape"]) if cfg["input-shape"] != '' else ''
         cfg["num-classes"] = int(cfg["num-classes"])
         cfg["epochs"] = int(cfg["epochs"])
         cfg["learning-rate"] = float(cfg["learning-rate"])
