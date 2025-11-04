@@ -365,10 +365,10 @@ class DatasetFactory:
             g = torch.Generator()
             g.manual_seed(seed)
 
-            trainloader = DataLoader(
-                HFAudioDataset(partition, label_names), batch_size=batch_size,
-                shuffle=True, num_workers=0, worker_init_fn=seed_worker, generator=g
-            )
+            ds = HFAudioDataset(partition, label_names)
+            is_empty = len(ds) == 0
+            trainloader = DataLoader(ds, batch_size=batch_size, shuffle=False if is_empty else True, num_workers=0,
+                                     worker_init_fn=seed_worker, generator=g)
 
             cls._fds_partition_cache[partition_id] = trainloader
         else:
