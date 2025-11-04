@@ -58,7 +58,7 @@ def get_initial_parameters(context: Context):
 
 def get_initial_model(context: Context):
     model_name = context.run_config['model-name']
-    input_shape = ast.literal_eval(context.run_config['input-shape'])
+    input_shape = ast.literal_eval(context.run_config['input-shape']) if context.run_config["input-shape"] != '' else ''
     num_classes = context.run_config['num-classes']
     root_model_dir = context.run_config["root-model-dir"]
     model_path = root_model_dir + model_name + '.pth'
