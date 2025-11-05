@@ -8,6 +8,7 @@ fi
 
 export CUDA_VISIBLE_DEVICES=$1
 
+# ray config
 export RAY_memory_usage_threshold=0.99
 export RAY_memory_monitor_refresh_ms=0
 
@@ -23,7 +24,7 @@ for i in {1..5}; do
 
   # criar perfis
   echo "Criando perfis"
-  python gen_sim_profile.py --seed $i
+  python gen_sim_profile.py --seed $i --agg=fedprox
 
-  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='aff'"
+  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='hetaaff' aggregation-name='fedprox'"
 done
