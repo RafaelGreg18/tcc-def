@@ -24,10 +24,7 @@ for i in {1..5}; do
 
   # criar perfis
   echo "Criando perfis"
-  python gen_sim_profile.py --seed $i
+  python gen_sim_profile.py --seed $i --agg=fedprox
 
-  for alpha in 0.1 1.0; do
-    echo "Alpha $alpha"
-    flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150  aggregation-name='fedprox' dir-alpha=$alpha"
-  done
+  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 aggregation-name='fedprox'"
 done

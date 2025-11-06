@@ -24,7 +24,7 @@ for i in {1..5}; do
 
   # criar perfis
   echo "Criando perfis"
-  python gen_sim_profile.py --seed $i --agg=feddyn
+  python gen_sim_profile.py --seed $i
 
-  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='hetaaff' aggregation-name='feddyn'"
+  flwr run . gpu-sim-dl-24 --run-config="seed=$i num-rounds=150 participants-name='hetaaff'"
 done

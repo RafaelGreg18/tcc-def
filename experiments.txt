@@ -3,6 +3,19 @@ Exp-2
 Exp-3
 Exp-4
 In-Progress:
-Exp-1:
-    - In-Progress: const-shuffle, const-mobile, const-aff, const-hetaaff
+Exp-4:
+    - In-Progress: const-lstm
+Exp-3:
+    - In-Progress: const-fedprox
 Done:
+Exp-1
+
+Configs:
+    Exp-1: default with Shufflenet
+        Dynff:
+            - buds: 1.0 and 0.5
+            - strategies: dyn and fix
+    Exp-4:
+        LSTM:
+            epochs: 5
+            max-participants-fraction: 0.1
