@@ -67,8 +67,6 @@ nvidia-nvtx-cu12==12.8.90
 packaging==25.0
 pandas==2.3.1
 pathspec==0.12.1
--e file:///home/rafael.jarczewski/dynff
-pillow==11.3.0
 platformdirs==4.3.8
 pluggy==1.6.0
 pooch==1.8.2
