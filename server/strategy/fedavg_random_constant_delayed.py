@@ -12,6 +12,7 @@ class FedAvgRandomConstantDelayed(FedAvgRandomConstant):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.agg_delay = self.context.run_config["agg-delay"]
+        self.start_delay = self.context.run_config["cp"] + 1
         self.parameters_to_agg = []
         self.last_params = None
         self.last_metrics = None
@@ -31,7 +32,7 @@ class FedAvgRandomConstantDelayed(FedAvgRandomConstant):
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
-        if server_round % self.agg_delay != 0:
+        if server_round >= self.start_delay and server_round % self.agg_delay != 0:
             self.last_params = parameters
             self.last_metrics = {}
 
@@ -47,27 +48,31 @@ class FedAvgRandomConstantDelayed(FedAvgRandomConstant):
             return None, {}
 
         # Convert results
-        if server_round % self.agg_delay != 0:
-            for _, fit_res in results:
-                self.parameters_to_agg.append((parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples))
+        if server_round >= self.start_delay:
+            if server_round % self.agg_delay != 0:
+                for _, fit_res in results:
+                    self.parameters_to_agg.append((parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples))
+            else:
+                for _, fit_res in results:
+                    self.parameters_to_agg.append((parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples))
+                aggregated_ndarrays = aggregate(self.parameters_to_agg)
+                parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
+
+                # Aggregate custom metrics if aggregation fn was provided
+                metrics_aggregated = {}
+                if self.fit_metrics_aggregation_fn:
+                    fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+                    metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+                elif server_round == 1:  # Only log this warning once
+                    log(WARNING, "No fit_metrics_aggregation_fn provided")
+
+                self.last_params = parameters_aggregated
+                self.last_metrics = metrics_aggregated
+                self.parameters_to_agg = []
+
+            print(f"Round {server_round}, params: {len(self.parameters_to_agg)}")
         else:
-            for _, fit_res in results:
-                self.parameters_to_agg.append((parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples))
-            aggregated_ndarrays = aggregate(self.parameters_to_agg)
-            parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
+            self.last_params, self.last_metrics = super()._do_aggregate_fit(server_round, results, failures)
 
-            # Aggregate custom metrics if aggregation fn was provided
-            metrics_aggregated = {}
-            if self.fit_metrics_aggregation_fn:
-                fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
-                metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-            elif server_round == 1:  # Only log this warning once
-                log(WARNING, "No fit_metrics_aggregation_fn provided")
-
-            self.last_params = parameters_aggregated
-            self.last_metrics = metrics_aggregated
-            self.parameters_to_agg = []
-
-        print(f"Round {server_round}, params: {len(self.parameters_to_agg)}")
 
         return self.last_params, self.last_metrics
