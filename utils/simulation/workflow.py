@@ -10,10 +10,12 @@ from torch.utils.data import DataLoader
 from server.strategy.fedavg_divfl_aff import FedAvgDivflAFF
 from server.strategy.fedavg_divfl_constant import FedAvgDivflConstant
 from server.strategy.fedavg_divfl_critical import FedAvgDivflCriticalFL
+from server.strategy.fedavg_divfl_dynff import FedAvgDivflDynff
 from server.strategy.fedavg_divfl_hetaaff import FedAvgDivflHETAAFF
 from server.strategy.fedavg_oort_aff import FedAvgOortAFF
 from server.strategy.fedavg_oort_constant import FedAvgOortConstant
 from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
+from server.strategy.fedavg_oort_dynff import FedAvgOortDynff
 from server.strategy.fedavg_oort_hetaaff import FedAvgOortHETAAFF
 from server.strategy.fedavg_random_aff import FedAvgRandomAFF
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
@@ -27,10 +29,12 @@ from server.strategy.fedavg_random_recombination import FedAvgRandomRecombinatio
 from server.strategy.feddyn_random_aff import FedDynRandomAFF
 from server.strategy.feddyn_random_constant import FedDynRandomConstant
 from server.strategy.feddyn_random_criticalfl import FedDynRandomCriticalFL
+from server.strategy.feddyn_random_dynff import FedDynRandomDynff
 from server.strategy.feddyn_random_hetaaff import FedDynRandomHETAAFF
 from server.strategy.fedprox_random_aff import FedProxRandomAFF
 from server.strategy.fedprox_random_constant import FedProxRandomConstant
 from server.strategy.fedprox_random_criticalfl import FedProxRandomCriticalFL
+from server.strategy.fedprox_random_dynff import FedProxRandomDynff
 from server.strategy.fedprox_random_hetaaff import FedProxRandomHETAAFF
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
@@ -215,21 +219,25 @@ STRATEGY_REGISTRY = {
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
     ("fedavg", "oort", "aff"): FedAvgOortAFF,
     ("fedavg", "oort", "hetaaff"): FedAvgOortHETAAFF,
+    ("fedavg", "oort", "dynff"): FedAvgOortDynff,
 
     ("fedavg", "divfl", "constant"): FedAvgDivflConstant,
     ("fedavg", "divfl", "criticalfl"): FedAvgDivflCriticalFL,
     ("fedavg", "divfl", "aff"): FedAvgDivflAFF,
     ("fedavg", "divfl", "hetaaff"): FedAvgDivflHETAAFF,
+    ("fedavg", "divfl", "dynff"): FedAvgDivflDynff,
 
     ("fedprox", "random", "constant"): FedProxRandomConstant,
     ("fedprox", "random", "criticalfl"): FedProxRandomCriticalFL,
     ("fedprox", "random", "aff"): FedProxRandomAFF,
     ("fedprox", "random", "hetaaff"): FedProxRandomHETAAFF,
+    ("fedprox", "random", "dynff"): FedProxRandomDynff,
 
     ("feddyn", "random", "constant"): FedDynRandomConstant,
     ("feddyn", "random", "criticalfl"): FedDynRandomCriticalFL,
     ("feddyn", "random", "aff"): FedDynRandomAFF,
     ("feddyn", "random", "hetaaff"): FedDynRandomHETAAFF,
+    ("feddyn", "random", "dynff"): FedDynRandomDynff,
 
 }
 
