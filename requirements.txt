@@ -172,10 +172,10 @@ tinycss2==1.4.0
 tokenizers==0.21.4
 tomli==2.2.1
 tomli_w==1.2.0
-torch==2.7.0
-torchaudio==2.7.0
-torchmetrics==1.8.1
-torchvision==0.22.0
+torch
+torchaudio
+torchmetrics
+torchvision
 tornado==6.5.2
 tqdm==4.67.1
 traitlets==5.14.3
