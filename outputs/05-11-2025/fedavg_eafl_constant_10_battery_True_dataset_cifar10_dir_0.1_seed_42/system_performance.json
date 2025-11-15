@@ -1,0 +1,28 @@
+{
+  "2": {
+    "total_mJ": 125283812.86527057,
+    "total_ceq": 13.956590483288073,
+    "selected_mJ": 20752695.32838563,
+    "unselected_mJ": 104531117.53688498,
+    "selected_ceq": 2.4043789272612903,
+    "unselected_ceq": 11.552211556026784,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 432582880,
+    "num_participants": 10,
+    "num_failures": 0
+  },
+  "3": {
+    "total_mJ": 213484934.64335364,
+    "total_ceq": 23.371751655108007,
+    "selected_mJ": 24369401.67997525,
+    "unselected_mJ": 189115532.96337828,
+    "selected_ceq": 1.8949127579982106,
+    "unselected_ceq": 21.476838897109797,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 432582880,
+    "num_participants": 10,
+    "num_failures": 0
+  }
+}

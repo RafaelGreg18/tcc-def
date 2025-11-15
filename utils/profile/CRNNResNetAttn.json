@@ -1,0 +1,18 @@
+{
+  "JetsonAGXOrin": {
+    "training_ms": 1235.7071603107345,
+    "evaluation_ms": 816.1386532485876,
+    "training_mJ": 17387.629475886297,
+    "evaluation_mJ": 9611.072927235837,
+    "idle_mJ": 7.3,
+    "max_battery_mJ": 432000000.0
+  },
+  "JetsonOrinNano": {
+    "training_ms": 1342.3038137421918,
+    "evaluation_ms": 858.5519994321409,
+    "training_mJ": 13505.447335375393,
+    "evaluation_mJ": 7308.459597930111,
+    "idle_mJ": 5.09,
+    "max_battery_mJ": 432000000.0
+  }
+}

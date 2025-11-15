@@ -1,0 +1,49 @@
+# Similarity Matrix PAC-FL
+            key = DatasetConfig.BATCH_KEY[self.dataset_id]
+            value = DatasetConfig.BATCH_VALUE[self.dataset_id]
+
+            idxs_local = np.arange(len(self.dataloader.dataset))
+
+            labels_local = []
+            samples_local = []
+            for batch in self.dataloader:
+                if isinstance(batch, dict):
+                    x, y = batch[key], batch[value]
+                elif isinstance(batch, list):
+                    x, y = batch[0], batch[1]
+                labels_local.append(y)
+                samples_local.append(x)
+
+            samples_local = np.array(torch.cat(samples_local).tolist())
+            labels_local = np.array(torch.cat(labels_local).tolist())
+            idxs_labels_local = np.vstack((idxs_local, labels_local))
+            idxs_labels_local = idxs_labels_local[:, idxs_labels_local[1, :].argsort()]
+            idxs_local = idxs_labels_local[0, :]
+            labels_local = idxs_labels_local[1, :]
+
+            uni_labels, cnt_labels = np.unique(labels_local, return_counts=True)
+            nlabels = len(uni_labels)
+            cnt = 0
+            U_temp = []
+
+            for j in range(nlabels):
+                local_ds1 = samples_local[idxs_local[cnt:cnt + cnt_labels[j]]]
+                local_ds1 = local_ds1.reshape(cnt_labels[j], -1)
+                local_ds1 = local_ds1.T
+
+                u1_temp, sh1_temp, vh1_temp = np.linalg.svd(local_ds1, full_matrices=False)
+                u1_temp = u1_temp / np.linalg.norm(u1_temp, ord=2, axis=0)
+                U_temp.append(u1_temp[:, 0:5]) # Entre 2 e 5 no artigo
+
+                cnt += cnt_labels[j]
+
+            # Colocar em ambiente compartilhado
+            save_as_npz(U_temp, filename=self.repr)
+
+def save_as_npz(arr_list, out_dir="similarity", filename="arrays_compressed.npz"):
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    # nomeia como a0, a1, a2, ...
+    named = {f"a{i}": arr for i, arr in enumerate(arr_list)}
+    np.savez_compressed(out / filename, **named)

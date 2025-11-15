@@ -1,0 +1,15 @@
+{
+  "2": {
+    "total_mJ": 97509433.24546327,
+    "total_ceq": 10.879316840715601,
+    "selected_mJ": 15100198.358408485,
+    "unselected_mJ": 82409234.88705479,
+    "selected_ceq": 1.845692824532163,
+    "unselected_ceq": 9.033624016183438,
+    "num_expired_thresh": 0,
+    "num_depleted": 0,
+    "num_transmited_bytes": 432582880,
+    "num_participants": 10,
+    "num_failures": 0
+  }
+}

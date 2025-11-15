@@ -1,0 +1,258 @@
+{
+  "World": {
+    "Oceania": {
+      "Australia": {
+        "AU-NSW": 544.96,
+        "AU-NT": 489.65,
+        "AU-QLD": 592.03,
+        "AU-SA": 184.46,
+        "AU-TAS": 88.01,
+        "AU-VIC": 498.36,
+        "AU-WA": 426.13
+      },
+      "New Zealand": {
+        "NZ": 96.94
+      }
+    },
+    "Europe:": {
+      "Austria": {
+        "AT": 170.77
+      },
+      "Belgium": {
+        "BE": 174.45
+      },
+      "Bosnia and Herzegovina": {
+        "BA": 489.05
+      },
+      "Bulgaria": {
+        "BG": 378.57
+      },
+      "Croatia": {
+        "HR": 280.51
+      },
+      "Cyprus": {
+        "CY": 946.58
+      },
+      "Czech Republic": {
+        "CZ": 501.83
+      },
+      "Denmark": {
+        "DK-BHM": 55.93,
+        "DK-DK2": 154.42,
+        "DK-DK1": 147.36
+      },
+      "Estonia": {
+        "EE": 279.51
+      },
+      "Finland": {
+        "FI": 82.07
+      },
+      "France": {
+        "FR": 59.28
+      },
+      "Germany": {
+        "DE": 415.62
+      },
+      "Great Britain": {
+        "GB": 199.92
+      },
+      "Greece": {
+        "GR": 391.19
+      },
+      "Hungary": {
+        "HU": 260.14
+      },
+      "Iceland": {
+        "IS": 27.87
+      },
+      "Ireland": {
+        "IE": 385.81
+      },
+      "Italy": {
+        "IT-CNO": 286.4,
+        "IT-CSO": 357.5,
+        "IT-NO": 308.84,
+        "IT-SAR": 564.64,
+        "IT-SIC": 390.97,
+        "IT-SO": 355.2
+      },
+      "Latvia": {
+        "LV": 203.27
+      },
+      "Lithuania": {
+        "LT": 193.34
+      },
+      "Luxembourg": {
+        "LU": 296.39
+      },
+      "Netherlands": {
+        "NL": 290.23
+      },
+      "Northern Ireland": {
+        "GB-NIR": 273.61
+      },
+      "Norway": {
+        "NO-NO3": 29.0,
+        "NO-NO4": 51.59,
+        "NO-NO1": 28.6,
+        "NO-NO2": 38.31,
+        "NO-NO5": 27.33
+      },
+      "Poland": {
+        "PL": 804.41
+      },
+      "Portugal": {
+        "PT": 157.24
+      },
+      "Romania": {
+        "RO": 297.65
+      },
+      "Serbia": {
+        "RS": 498.94
+      },
+      "Slovakia": {
+        "SK": 245.54
+      },
+      "Slovenia": {
+        "SI": 243.63
+      },
+      "Spain": {
+        "ES": 172.13
+      },
+      "Sweden": {
+        "SE-SE2": 17.15,
+        "SE-SE1": 16.1,
+        "SE-SE3": 22.77,
+        "SE-SE4": 40.94
+      },
+      "Switzerland": {
+        "CH": 85.04
+      },
+      "Turkey": {
+        "TR": 436.67
+      }
+    },
+    "South America": {
+      "Brazil": {
+        "BR-CS": 89.54,
+        "BR-N": 107.85,
+        "BR-NE": 42.99,
+        "BR-S": 82.65
+      },
+      "Chile": {
+        "CL-SEN": 181.43
+      },
+      "Peru": {
+        "PE": 219.04
+      },
+      "Uruguay": {
+        "UY": 97.04
+      }
+    },
+    "North America": {
+      "Canada": {
+        "CA-ON": 76.42,
+        "CA-QC": 30.52
+      },
+      "United States": {
+        "US-CAR-YAD": 50.07,
+        "US-SW-AZPS": 434.08,
+        "US-MIDW-AECI": 615.78,
+        "US-NW-AVA": 234.32,
+        "US-CAL-BANC": 264.23,
+        "US-NW-BPAT": 121.4,
+        "US-CAL-CISO": 262.2,
+        "US-NW-TPWR": 89.13,
+        "US-FLA-TAL": 464.15,
+        "US-CAR-DUK": 296.92,
+        "US-FLA-FPC": 520.86,
+        "US-CAR-CPLE": 301.87,
+        "US-CAR-CPLW": 476.19,
+        "US-SW-EPE": 544.66,
+        "US-TEX-ERCO": 388.57,
+        "US-FLA-FMPP": 548.59,
+        "US-FLA-FPL": 407.51,
+        "US-FLA-GVL": 579.79,
+        "US-NW-GRID": 515.42,
+        "US-NW-IPCO": 340.17,
+        "US-CAL-IID": 525.83,
+        "US-NE-ISNE": 285.75,
+        "US-FLA-JEA": 633.96,
+        "US-CAL-LDWP": 381.86,
+        "US-MIDW-LGEE": 864.53,
+        "US-MIDW-MISO": 501.81,
+        "US-NW-NEVP": 458.0,
+        "US-NY-NYIS": 281.42,
+        "US-NW-NWMT": 631.65,
+        "US-MIDA-PJM": 396.32,
+        "US-NW-CHPD": 27.37,
+        "US-NW-DOPD": 31.64,
+        "US-NW-GCPD": 55.5,
+        "US-NW-PACE": 647.31,
+        "US-NW-PACW": 206.11,
+        "US-NW-PGE": 233.12,
+        "US-NW-PSCO": 509.48,
+        "US-SW-PNM": 426.73,
+        "US-NW-PSEI": 203.08,
+        "US-SW-SRP": 313.81,
+        "US-NW-SCL": 24.0,
+        "US-FLA-SEC": 663.62,
+        "US-CAR-SCEG": 453.01,
+        "US-CAR-SC": 646.6,
+        "US-SE-SOCO": 435.08,
+        "US-CENT-SWPP": 443.39,
+        "US-CENT-SPA": 190.66,
+        "US-FLA-TEC": 512.57,
+        "US-TEN-TVA": 355.02,
+        "US-SW-TEPC": 596.22,
+        "US-CAL-TIDC": 380.25,
+        "US-SW-WALC": 388.18,
+        "US-NW-WACM": 693.91,
+        "US-NW-WAUW": 268.51
+      }
+    },
+    "Asia": {
+      "Hong Kong": {
+        "HK": 435.36
+      },
+      "India": {
+        "IN-EA": 758.9,
+        "IN-NE": 423.83,
+        "IN-NO": 570.67,
+        "IN-SO": 546.74,
+        "IN-WE": 703.67
+      },
+      "Indonesia": {
+        "ID": 652.36
+      },
+      "Israel": {
+        "IL": 560.44
+      },
+      "Japan": {
+        "JP-CB": 488.33,
+        "JP-CG": 466.31,
+        "JP-HKD": 466.53,
+        "JP-HR": 457.8,
+        "JP-KN": 449.56,
+        "JP-KY": 309.36,
+        "JP-ON": 590.65,
+        "JP-TH": 481.01,
+        "JP-TK": 536.06
+      },
+      "Philippines": {
+        "PH-LU": 639.13,
+        "PH-MI": 516.85,
+        "PH-VI": 616.49
+      },
+      "Singapore": {
+        "SG": 487.52
+      },
+      "South Korea": {
+        "KR": 443.5
+      },
+      "Taiwan": {
+        "TW": 534.97
+      }
+    }
+  }
+}

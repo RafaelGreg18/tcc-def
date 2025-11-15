@@ -1,0 +1,215 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "perf_eval_cs_fl"
+version = "1.0.0"
+description = ""
+license = "Apache-2.0"
+dependencies = [
+    "flwr[simulation]>=1.15.2",
+    "flwr-datasets[vision]>=0.5.0",
+    "torch>=2.5.1",
+    "torchvision>=0.20.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "filipe"
+
+[tool.flwr.app.components]
+serverapp = "server_app:app"
+clientapp = "client_app:app"
+
+[tool.flwr.app.config]
+# global
+seed = 1
+root-model-dir = "./model/"
+root-profiles-dir = "./profiles/"
+root-outputs-dir = "./outputs/"
+
+# Profiles
+# "./utils/profile/Mobilenet_v2.json"
+# "./utils/profile/Shufflenet_v2_x0_5.json"
+# "./utils/profile/Resnext50_32x4d.json"
+# "./utils/profile/Lstm.json"
+# "./utils/profile/CRNNResNetAttn.json"
+devices-profile-path = "./utils/profile/"
+net-speed-path = "./utils/profile/bandwidth.json"
+carbon-data-path = "./utils/profile/carbon.json"
+
+# model
+
+# "simplecnn"
+# "Mobilenet_v2"
+# "Shufflenet_v2_x0_5"
+# "Resnext50_32x4d"
+# "Lstm"
+# "CRNNResNetAttn"
+# KWT
+#model-name = "KWT"
+model-name = "Shufflenet_v2_x0_5"
+#model-name = "simplecnn"
+# shape
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
+# classes
+num-classes = 10 #KWT: 36 Lstm: - Others: 10
+# model independent
+epochs = 5 #real deploy: 5
+learning-rate = 1e-2 #CRNNResNetAttn: 3e-4 Others: 1e-3
+weight-decay = 1e-5
+decay-step = 10
+momentum = 0.9
+
+# device profile
+use-battery = true
+prefer-time = "EQUAL" # SLOW, EQUAL, FAST
+prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
+prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
+## TODO substituir por 20%, 50%, 100% 
+## da media do selected_mj pra 150 rodadas, dividido por 10
+battery-profile-low = 100
+battery-profile-medium = 200
+battery-profile-high = 300
+carbon-region = "United States"
+net-scenario = "US"
+
+# dataset
+# "flwrlabs/shakespeare"
+# "uoft-cs/cifar10"
+# "speech_commands"
+hugginface-id = "uoft-cs/cifar10"
+dir-alpha = 1.0 #0.1, 0.3, 1.0
+batch-size = 16 #speech_commands: 8 others:16
+
+# client
+battery-threshold = 0.1
+
+# strategy
+participants-name = "constant"
+selection-name = "random"
+aggregation-name = "fedavg"
+num-clients = 100 #shakespeare:903 cifar10:100 speech_commands:2112
+num-edge-servers = 100
+num-rounds = 100 #100
+eafl-weight = 0.5
+num-participants = 10 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
+num-evaluators = 0
+max-participants-fraction = 0.75
+min-participants-fraction = 0.75
+
+#TwoPhase
+num-participants-bcp = 10
+num-participants-acp = 10
+smooth-window = 5
+tau-deriv = 0.005
+cp=25
+
+#Critical
+is-critical = false
+fgn-thresh = 0.01
+
+#Aff
+initial-window-size = 2
+max-window-size = 10
+min-window-size = 2
+aff-thresh = 0.01
+regression-degree = 1
+
+#Hetaaff
+hetaaff-thresh = 0.01
+hetaaff-reduce-weight = 0.4
+hetaaff-increase-weight = 0.4
+
+#Oort
+exploration-factor = 0.9
+step-window = 5
+pacer-step = 60
+penalty = 2.0
+cut-off = 0.95
+blacklist-num = 1000
+desired-duration = 100000000000000000000
+
+#Recombination
+mult-factor = 1
+prioritize-sim = true
+agg-delay = 1
+
+# fedprox
+proximal-mu = 2.0
+
+# feddyn
+alpha-coef = 1e-2
+
+#dynff
+# using stablization
+start-exp-round = -1 # -1 to auto operation
+# stablization verification
+start-obs = 20
+W=10
+K=5
+delta=1e-2
+method = "huber"
+start-after=20
+smoothing-alpha = 0.1
+# participants are constant by acks rounds
+acks = 3
+# control scheduling
+scheduling-gamma = 0.1 # Default: 0.618
+bud-percentual = 1.0 # default: 1.0
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0
+options.backend.init_args.num_cpus = 1
+options.backend.init_args.num_gpus = 1
+
+[tool.flwr.federations.gpu-sim-dl]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 25
+options.backend.init_args.num_gpus = 3
+
+[tool.flwr.federations.gpu-sim-dl-16]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 25
+options.backend.init_args.num_gpus = 6
+
+[tool.flwr.federations.gpu-sim-dl-17]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 25
+options.backend.init_args.num_gpus = 3
+
+[tool.flwr.federations.gpu-sim-dl-02]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.5
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 2
+
+[tool.flwr.federations.gpu-sim-dl-24]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.25
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 3
+
+[tool.flwr.federations.gpu-sim-lrc]
+options.num-supernodes = 100
+options.backend.client-resources.num-cpus = 1
+options.backend.client-resources.num-gpus = 0.2
+options.backend.init_args.num_cpus = 10
+options.backend.init_args.num_gpus = 1

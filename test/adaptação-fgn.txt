@@ -1,0 +1,23 @@
+Servidor:
+    1 - Obtém normas dos clientes - Linha 74 de Util.Py
+    2 - Realiza média - Linha 75 de Util.Py
+    3 - Guarda em uma lista que continha 0 repetidos Window + 2 vezes - Linha 76 de Util.Py
+    4 - Verifica se a quantidade de participantes alcançou o máximo - Linha 80 de Util.Py
+    5 - Calcula oldnorm (FGN(t-1)). Pega a lista de médias de norma do gradiente - Linha 82 de Util.Py
+    e: obtém a janela anterior e extrai a média que é o valor de oldnorm.
+    6 - Faz o mesmo para newnorm, mas agora para a janela atual. - Linha 83 de Util.Py
+    7 - Faz o cálculo de verificação se está acima do threshold. Caso esteja, - Linha 86 de Util.Py
+    ainda CLP.
+    8 - Seleciona fração C aleatório e inicia o treinamento de cada cliente selecionado
+
+Cliente:
+    1 - Recebe o modelo a ser treinado - Linha 87 de Sims.py
+    2 - Atualiza LR com o weight_decay se rodada é decay_step - Linha 89 de Sims.py
+    3 - Define otmizador (SGD) e perda (CrossEntropyLoss)
+    4 - Realizar treinamento do batch: Clipa a norma em 10 no máximo. - Linha 116 a 129 de Sims.py
+    5 - Para cada param do modelo, calcula norma e soma a variável temporária - Linha 131 a 133 de Sims.py
+    6 - Soma resultado temporário a variável acumuladora grad_norm - Linha 134 a 137 de Sims.py
+    7 - Guarda o resultado acumulado das normas em uma lista de normas por época. - Linha 144 de Sims.py
+    8 - Atualiza gradnorm do cliente com a média das normas na lista GNORM vezes a taxa de aprendizado.
+     - Linha 149 de Sims.py
+    9 - Disponibiliza valor ao servidor.
