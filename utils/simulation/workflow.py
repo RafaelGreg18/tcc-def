@@ -11,11 +11,13 @@ from server.strategy.fedavg_divfl_aff import FedAvgDivflAFF
 from server.strategy.fedavg_divfl_constant import FedAvgDivflConstant
 from server.strategy.fedavg_divfl_critical import FedAvgDivflCriticalFL
 from server.strategy.fedavg_divfl_dynff import FedAvgDivflDynff
+from server.strategy.fedavg_divfl_dynff_buffered import FedAvgDivflDynffBuff
 from server.strategy.fedavg_divfl_hetaaff import FedAvgDivflHETAAFF
 from server.strategy.fedavg_oort_aff import FedAvgOortAFF
 from server.strategy.fedavg_oort_constant import FedAvgOortConstant
 from server.strategy.fedavg_oort_critical import FedAvgOortCriticalFL
 from server.strategy.fedavg_oort_dynff import FedAvgOortDynff
+from server.strategy.fedavg_oort_dynff_buffered import FedAvgOortDynffBuff
 from server.strategy.fedavg_oort_hetaaff import FedAvgOortHETAAFF
 from server.strategy.fedavg_random_aff import FedAvgRandomAFF
 from server.strategy.fedavg_random_constant import FedAvgRandomConstant
@@ -24,17 +26,20 @@ from server.strategy.fedavg_random_constant_twophase import FedAvgRandomConstant
 from server.strategy.fedavg_random_criticalfl import FedAvgRandomCriticalFL
 from server.strategy.fedavg_random_criticalpoint import FedAvgRandomCPEval
 from server.strategy.fedavg_random_dynff import FedAvgRandomDynff
+from server.strategy.fedavg_random_dynff_buffered import FedAvgRandomDynffBuff
 from server.strategy.fedavg_random_hetaaff import FedAvgRandomHETAAFF
 from server.strategy.fedavg_random_recombination import FedAvgRandomRecombination
 from server.strategy.feddyn_random_aff import FedDynRandomAFF
 from server.strategy.feddyn_random_constant import FedDynRandomConstant
 from server.strategy.feddyn_random_criticalfl import FedDynRandomCriticalFL
 from server.strategy.feddyn_random_dynff import FedDynRandomDynff
+from server.strategy.feddyn_random_dynff_buffered import FedDynRandomDynffBuff
 from server.strategy.feddyn_random_hetaaff import FedDynRandomHETAAFF
 from server.strategy.fedprox_random_aff import FedProxRandomAFF
 from server.strategy.fedprox_random_constant import FedProxRandomConstant
 from server.strategy.fedprox_random_criticalfl import FedProxRandomCriticalFL
 from server.strategy.fedprox_random_dynff import FedProxRandomDynff
+from server.strategy.fedprox_random_dynff_buffered import FedProxRandomDynffBuff
 from server.strategy.fedprox_random_hetaaff import FedProxRandomHETAAFF
 from utils.dataset.partition import DatasetFactory
 from utils.model.manipulation import ModelPersistence, get_weights, set_weights, test
@@ -214,30 +219,35 @@ STRATEGY_REGISTRY = {
     ("fedavg", "random", "recombination"): FedAvgRandomRecombination,
     ("fedavg", "random", "delayed"): FedAvgRandomConstantDelayed,
     ("fedavg", "random", "dynff"): FedAvgRandomDynff,
+    ("fedavg", "random", "dynffbuff"): FedAvgRandomDynffBuff,
 
     ("fedavg", "oort", "constant"): FedAvgOortConstant,
     ("fedavg", "oort", "criticalfl"): FedAvgOortCriticalFL,
     ("fedavg", "oort", "aff"): FedAvgOortAFF,
     ("fedavg", "oort", "hetaaff"): FedAvgOortHETAAFF,
     ("fedavg", "oort", "dynff"): FedAvgOortDynff,
+    ("fedavg", "oort", "dynffbuff"): FedAvgOortDynffBuff,
 
     ("fedavg", "divfl", "constant"): FedAvgDivflConstant,
     ("fedavg", "divfl", "criticalfl"): FedAvgDivflCriticalFL,
     ("fedavg", "divfl", "aff"): FedAvgDivflAFF,
     ("fedavg", "divfl", "hetaaff"): FedAvgDivflHETAAFF,
     ("fedavg", "divfl", "dynff"): FedAvgDivflDynff,
+    ("fedavg", "divfl", "dynffbuff"): FedAvgDivflDynffBuff,
 
     ("fedprox", "random", "constant"): FedProxRandomConstant,
     ("fedprox", "random", "criticalfl"): FedProxRandomCriticalFL,
     ("fedprox", "random", "aff"): FedProxRandomAFF,
     ("fedprox", "random", "hetaaff"): FedProxRandomHETAAFF,
     ("fedprox", "random", "dynff"): FedProxRandomDynff,
+    ("fedprox", "random", "dynffbuff"): FedProxRandomDynffBuff,
 
     ("feddyn", "random", "constant"): FedDynRandomConstant,
     ("feddyn", "random", "criticalfl"): FedDynRandomCriticalFL,
     ("feddyn", "random", "aff"): FedDynRandomAFF,
     ("feddyn", "random", "hetaaff"): FedDynRandomHETAAFF,
     ("feddyn", "random", "dynff"): FedDynRandomDynff,
+    ("feddyn", "random", "dynffbuff"): FedDynRandomDynffBuff,
 
 }
 
