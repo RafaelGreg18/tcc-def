@@ -26,7 +26,7 @@ class FedAvgRandomDynffBuff(FedAvgRandomDynff):
 
         # Convert results
         if self.state["stable"]:
-            if server_round % self.acks != 0:
+            if server_round % 2 != 0: #self.acks in original testing with 2
                 for _, fit_res in results:
                     self.parameters_to_agg.append((parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples))
             else:
