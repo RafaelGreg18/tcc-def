@@ -17,6 +17,7 @@ pip install -r requirements.txt
 
 
 export HF_HOME="/path/to/huggingface/cache"
+export HF_HUB_OFFLINE=1
 
 echo "Criando modelo"
 python gen_sim_model.py --seed 42
