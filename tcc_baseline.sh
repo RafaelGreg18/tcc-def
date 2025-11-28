@@ -1,22 +1,20 @@
 #!/bin/bash
-#SBATCH --job-name=tcc_baseline
+#SBATCH --job-name=flower_galo_baseline
+#SBATCH --output=slurm.out
+#SBATCH --error=slurm.error
 #SBATCH --ntasks=1
 #SBATCH --time=24:00:00
-#SBATCH --mem=64G
+#SBATCH --mem=48G
 #SBATCH --cpus-per-task=32
 #SBATCH --gres=gpu:1
 #SBATCH --partition=l40s
-#SBATCH --exclusive
 #SBATCH --mail-user=r247346@dac.unicamp.br 
 #SBATCH --mail-type=BEGIN,END,FAIL
 
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+source ~/miniconda3/bin/activate
+conda activate flower
 
-
-export HF_HOME="/path/to/huggingface/cache"
+export HF_HOME="~/galo/cache"
 export HF_HUB_OFFLINE=1
 
 echo "Criando modelo"

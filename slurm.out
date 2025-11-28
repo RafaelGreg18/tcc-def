@@ -1,0 +1,8 @@
+Criando modelo
+Criando perfis
+Loading project configuration... 
+Success
+Command '['flower-simulation', '--app', '.', '--num-supernodes', '100', '--backend-config', '{"client-resources": {"num-cpus": 1, "num-gpus": 0}, "init_args": {"num_cpus": 1, "num_gpus": 1}}', '--run-config', "seed=42 num-rounds=150 selection-name='random' dir-alpha=0.1 use-battery=true"]' returned non-zero exit status 1.
+Loading project configuration... 
+Success
+Command '['flower-simulation', '--app', '.', '--num-supernodes', '100', '--backend-config', '{"client-resources": {"num-cpus": 1, "num-gpus": 0}, "init_args": {"num_cpus": 1, "num_gpus": 1}}', '--run-config', "seed=42 num-rounds=150 selection-name='random' dir-alpha=1.0 use-battery=true"]' returned non-zero exit status 1.
