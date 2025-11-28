@@ -60,15 +60,15 @@ class FedDynRandomHETAAFF(FedDynRandomAFF):
 
         return parameters_aggregated, metrics_aggregated
 
-    def evaluate(
-            self, server_round: int, parameters: Parameters
-    ) -> Optional[tuple[float, dict[str, Scalar]]]:
-        loss, metrics = super().evaluate(server_round, parameters)
-
-        if server_round > 1:
-            self.accuracies.append(metrics["cen_accuracy"])
-
-        return loss, metrics
+    # def evaluate(
+    #         self, server_round: int, parameters: Parameters
+    # ) -> Optional[tuple[float, dict[str, Scalar]]]:
+    #     loss, metrics = super().evaluate(server_round, parameters)
+    #
+    #     if server_round > 1:
+    #         self.accuracies.append(metrics["cen_accuracy"])
+    # 
+    #     return loss, metrics
 
     def update_hetaaff(self) -> int:
         if len(self.accuracies) >= self.current_window_size:

@@ -1,7 +1,9 @@
+import json
 import math
+from typing import Optional
 
 import numpy as np
-from flwr.common import FitIns
+from flwr.common import FitIns, Parameters, Scalar, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
@@ -127,3 +129,30 @@ class FedDynRandomAFF(FedDynRandomConstant):
         new_value = max(self.min_participants, min(self.max_participants, new_value))
 
         return int(new_value)
+
+    def evaluate(
+            self, server_round: int, parameters: Parameters
+    ) -> Optional[tuple[float, dict[str, Scalar]]]:
+        """Evaluate model parameters using an evaluation function."""
+        if self.evaluate_fn is None:
+            # No evaluation function provided
+            return None
+        parameters_ndarrays = parameters_to_ndarrays(parameters)
+        eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
+        if eval_res is None:
+            return None
+        loss, metrics = eval_res
+
+        if server_round > 1:
+            self.accuracies.append(metrics["cen_accuracy"])
+
+        my_results = {"cen_loss": loss, **metrics}
+
+        # Insert into local dictionary
+        self.performance_metrics_to_save[server_round] = my_results
+
+        # Save metrics as json
+        with open(self.model_performance_path, "w") as json_file:
+            json.dump(self.performance_metrics_to_save, json_file, indent=2)
+
+        return loss, metrics
