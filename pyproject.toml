@@ -72,9 +72,9 @@ prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
 prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
 ## TODO substituir por 20%, 50%, 100% 
 ## da media do selected_mj pra 150 rodadas, dividido por 10
-battery-profile-low = 100
-battery-profile-medium = 200
-battery-profile-high = 300
+battery-profile-low = 210
+battery-profile-medium = 420
+battery-profile-high = 600
 carbon-region = "United States"
 net-scenario = "US"
 
