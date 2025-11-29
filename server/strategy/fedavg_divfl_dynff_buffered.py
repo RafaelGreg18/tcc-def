@@ -58,7 +58,12 @@ class FedAvgDivflDynffBuff(FedAvgDivflDynff):
 
                 selected_cids = self.buffer_cids[:self.num_participants]
             else:
-                self.num_participants = min(self.max_participants, self.participants_stable[-1])
+                try:
+                    self.num_participants = min(self.max_participants, self.participants_stable[-1])
+                except IndexError:
+                    print(self.participants_stable)
+                    exit(1)
+
                 self.num_selected.append(self.num_participants)
                 selected_cids = self.buffer_cids[-self.num_participants:]
         else:
