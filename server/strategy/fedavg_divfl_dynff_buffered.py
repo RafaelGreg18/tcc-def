@@ -50,7 +50,6 @@ class FedAvgDivflDynffBuff(FedAvgDivflDynff):
                 self.participants_stable.append(start_participants)
                 self.participants_stable.append(end_participants)
                 self.num_participants = min(self.max_participants, start_participants)
-                self.num_selected.append(self.num_participants)
 
                 sample_size = min(start_participants + end_participants, client_manager.num_available())
                 self.buffer_cids = submod_sampling(self.gradients, sample_size, client_manager.num_available(),
@@ -58,14 +57,15 @@ class FedAvgDivflDynffBuff(FedAvgDivflDynff):
 
                 selected_cids = self.buffer_cids[:self.num_participants]
             else:
-                try:
+                if len(self.participants_stable) > 0:
                     self.num_participants = min(self.max_participants, self.participants_stable[-1])
-                except IndexError:
-                    print(self.participants_stable)
-                    exit(1)
-
-                self.num_selected.append(self.num_participants)
-                selected_cids = self.buffer_cids[-self.num_participants:]
+                    selected_cids = self.buffer_cids[-self.num_participants:]
+                else:
+                    base_idx = server_round - self.state["stable_round"]
+                    self.num_participants = self.initial_num_participants + self.additions[base_idx]
+                    sample_size = min(self.num_participants, client_manager.num_available())
+                    selected_cids = submod_sampling(self.gradients, sample_size, client_manager.num_available(),
+                                                stochastic=True)
         else:
             if server_round % self.acks == 0 and server_round > 3 :
                 self.update_dynff(server_round)
