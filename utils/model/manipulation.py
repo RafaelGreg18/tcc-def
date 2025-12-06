@@ -213,7 +213,7 @@ def train_prox(model, dataloader, epochs, criterion, optimizer, device, dataset_
             else:
                 stat_util = 0
         else:
-            avg_acc = avg_acc = stat_util = 0
+            avg_loss = avg_acc = stat_util = 0
 
     return avg_loss, avg_acc, stat_util
 
