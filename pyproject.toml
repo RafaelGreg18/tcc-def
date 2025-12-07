@@ -51,28 +51,30 @@ carbon-data-path = "./utils/profile/carbon.json"
 # "CRNNResNetAttn"
 # KWT
 #model-name = "KWT"
-#model-name = "Shufflenet_v2_x0_5"
-model-name = "simplecnn"
+model-name = "Shufflenet_v2_x0_5"
+#model-name = "simplecnn"
 # shape
-input-shape = "(3, 32, 32)"
-#input-shape = "(3,224,224)"
+#input-shape = "(3, 32, 32)"
+input-shape = "(3,224,224)"
 # classes
 num-classes = 10 #KWT: 36 Lstm: - Others: 10
 # model independent
-epochs = 10 #real deploy: 5
+epochs = 5 #real deploy: 5
 learning-rate = 1e-2 #CRNNResNetAttn: 3e-4 Others: 1e-3
 weight-decay = 1e-5
 decay-step = 10
 momentum = 0.9
 
 # device profile
-use-battery = false
+use-battery = true
 prefer-time = "EQUAL" # SLOW, EQUAL, FAST
 prefer-battery = "EQUAL" # LOW, MEDIUM, HIGH, EQUAL
 prefer-carbon = "UNIFORM" # LOW, HIGH, UNIFORM
-battery-profile-low = 100
-battery-profile-medium = 200
-battery-profile-high = 300
+## TODO substituir por 20%, 50%, 100% 
+## da media do selected_mj pra 150 rodadas, dividido por 10
+battery-profile-low = 210
+battery-profile-medium = 420
+battery-profile-high = 600
 carbon-region = "United States"
 net-scenario = "US"
 
@@ -92,7 +94,9 @@ participants-name = "constant"
 selection-name = "random"
 aggregation-name = "fedavg"
 num-clients = 100 #shakespeare:903 cifar10:100 speech_commands:2112
+num-edge-servers = 100
 num-rounds = 100 #100
+eafl-weight = 0.5
 num-participants = 10 #shakespeare:0.05 cifar10:0.1 speech_commands:0.025
 num-evaluators = 0
 max-participants-fraction = 0.75
