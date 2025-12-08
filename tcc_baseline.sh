@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=flower_galo_baseline
+#SBATCH --job-name=flower_galo_baseline_base
 #SBATCH --output=slurm.out
 #SBATCH --error=slurm.error
 #SBATCH --ntasks=1
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=48G
 #SBATCH --cpus-per-task=32
 #SBATCH --gres=gpu:1
