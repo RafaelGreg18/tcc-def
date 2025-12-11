@@ -319,7 +319,7 @@ class FedAvgEaflPlusConstant(BaseStrategy):
         if self.use_battery:
             battery_ratio = (self.profiles[cid]["initial_battery_mJ"] /
                              self.profiles[cid]['max_battery_mJ'])
-            return self.eafl_weight * normalized_utility + (1 - self.eafl_weight) * battery_ratio
+            return self.eafl_weight * battery_ratio + (1 - self.eafl_weight) * normalized_utility
         else:
             # Se não usar bateria, retornar apenas a utilidade normalizada
             return normalized_utility
